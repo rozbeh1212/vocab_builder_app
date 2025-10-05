@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -52,30 +54,63 @@ Future<void> initializeApp() async {
 }
 
 void main() {
-  runApp(FutureBuilder(
-    future: initializeApp(),
-    builder: (context, snapshot) {
-      if (snapshot.hasError) {
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Text('Error initializing app: ${snapshot.error}'),
+  // Catch any errors during app initialization
+  runZonedGuarded(() {
+    runApp(FutureBuilder(
+      future: initializeApp(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error initializing app:',
+                      style: TextStyle(
+                        color: Colors.red[700],
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        '${snapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        );
-      }
-      if (snapshot.connectionState != ConnectionState.done) {
-        return const MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
+          );
+        }
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
             ),
-          ),
-        );
-      }
-      return const MyApp();
-    },
-  ));
+          );
+        }
+        return const MyApp();
+      },
+    ));
+  }, (error, stack) {
+    debugPrint('Error: $error');
+    debugPrint('Stack trace: $stack');
+  });
 }
 
 class MyApp extends StatelessWidget {

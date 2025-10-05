@@ -21,8 +21,14 @@ class SettingsScreen extends StatelessWidget {
                 secondary: const Icon(Icons.dark_mode_outlined),
                 value: settingsProvider.themeMode == ThemeMode.dark,
                 onChanged: (bool value) {
-                  // Use listen: false when calling a method inside a callback
-                  settingsProvider.setThemeMode(value ? ThemeMode.dark : ThemeMode.light); // Use setThemeMode
+                  try {
+                    // Use listen: false when calling a method inside a callback
+                    settingsProvider.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error changing theme: $e')),
+                    );
+                  }
                 },
               ),
               const Divider(),
