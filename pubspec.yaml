@@ -1,0 +1,88 @@
+name: vocab_builder_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.19.0 <3.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Localization (built into Flutter SDK)
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  provider: ^6.1.5
+
+  # Networking
+  http: ^1.2.1
+
+  # Offline Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.3
+
+  # Persistent Key-Value Storage (for theme)
+  shared_preferences: ^2.2.3
+
+  # Connectivity
+
+  # File Operations
+  share_plus: ^12.0.0
+  file_picker:
+    git:
+      url: https://github.com/miguelpruivo/flutter_file_picker.git
+      ref: master
+  connectivity_plus: ^7.0.0
+
+  # UI & Fonts
+  google_fonts: ^6.2.1
+
+  # Text-to-Speech
+  flutter_tts: ^4.0.2
+  intl: ^0.20.2
+  flip_card: ^0.7.0 # Added for flashcard widget
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0 # Uncommented and set to a compatible version
+  # Code Generation
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.13
+  
+  # App Icon Generator
+  flutter_launcher_icons: ^0.14.4
+  
+  # Native Splash Screen Generator
+  flutter_native_splash: ^2.4.0
+
+# Flutter specific configurations
+flutter:
+  uses-material-design: true
+
+  # Declare assets folder so Flutter can find your images
+  assets:
+    - assets/
+    - assets/icon.png
+    - assets/data/
+
+# Configuration for the flutter_launcher_icons package
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+
+# Configuration for the flutter_native_splash package
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/icon.png
+  color_dark: "#121212"
+  android_12:
+    color: "#FFFFFF"
+    image: assets/icon.png
+    color_dark: "#121212"
