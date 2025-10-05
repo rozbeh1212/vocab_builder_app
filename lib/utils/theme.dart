@@ -53,7 +53,6 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: primary,
       useMaterial3: true,
-      scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.dark(
         primary: primary,
         primaryContainer: primaryContainer,
@@ -143,64 +142,6 @@ class AppTheme {
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: Color(0xFF323232),
-        contentTextStyle: TextStyle(color: Colors.white),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  static ThemeData get darkTheme {
-    const primary = Color(0xFF64FFDA);
-    const surface = Color(0xFF1E1E1E);
-    const background = Color(0xFF121212);
-    
-    return ThemeData(
-      brightness: Brightness.dark,
-      primaryColor: primary,
-      colorScheme: ColorScheme.dark(
-        primary: primary,
-        secondary: primary,
-        surface: surface,
-        onPrimary: background,
-        onSurface: Colors.white,
-      ),
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-      textTheme: GoogleFonts.latoTextTheme(ThemeData.dark().textTheme),
-      scaffoldBackgroundColor: background,
-      cardColor: surface,
-      cardTheme: CardThemeData(
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: surface,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: background,
-          elevation: 4,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          side: BorderSide(color: primary.withOpacity(0.5)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-      dividerTheme: DividerThemeData(
-        color: Colors.white.withOpacity(0.1),
-        thickness: 1,
-      ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: surface,
         contentTextStyle: TextStyle(color: Colors.white),
         behavior: SnackBarBehavior.floating,
       ),

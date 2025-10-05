@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider with ChangeNotifier {
-  // Always return dark theme
-  ThemeMode get themeMode => ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  ThemeMode get themeMode => _themeMode;
 
   SettingsProvider();
 
-  // No theme switching functionality needed
+  // Since we're enforcing dark mode, this will always set to dark
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = ThemeMode.dark;
+    notifyListeners();
+  }
 }
