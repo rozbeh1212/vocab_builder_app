@@ -8,6 +8,14 @@ import '../presentation/screens/settings_screen.dart';
 import '../presentation/screens/statistics_dashboard_screen.dart';
 import '../presentation/screens/dashboard_screen.dart';
 
+/// [AppRouter] handles all navigation logic for the application.
+/// 
+/// This class uses the Navigator 1.0 API to manage routes and provides a centralized
+/// place for all navigation-related code. It handles:
+/// * Route generation
+/// * Screen transitions
+/// * Route parameters
+/// * Navigation error handling
 class AppRouter {
   static const String mainRoute = '/';
   static const String addWordRoute = '/add_word';

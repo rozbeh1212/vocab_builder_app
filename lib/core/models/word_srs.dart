@@ -2,6 +2,24 @@ import 'package:hive/hive.dart';
 
 part 'word_srs.g.dart';
 
+/// [WordSRS] represents a word's spaced repetition learning data.
+///
+/// This model tracks:
+/// * The word being learned
+/// * Next review date
+/// * Learning progress metrics
+/// * Spaced repetition parameters
+///
+/// The model is used by the SRS system to:
+/// * Schedule reviews
+/// * Track learning progress
+/// * Adjust intervals based on performance
+/// * Maintain learning history
+///
+/// This class is annotated for Hive persistence and includes:
+/// * Automatic type adaptation
+/// * Efficient serialization
+/// * Type-safe storage
 @HiveType(typeId: 0)
 class WordSRS {
   @HiveField(0)

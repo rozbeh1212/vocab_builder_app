@@ -5,6 +5,25 @@ import '../constants/api_key.dart';
 import '../models/word_data.dart';
 import '../models/persian_context.dart';
 
+/// [GeminiService] interacts with Google's Gemini AI to provide word details.
+///
+/// This service:
+/// * Fetches comprehensive word information
+/// * Provides context-aware translations
+/// * Generates example sentences
+/// * Offers synonyms and related words
+///
+/// The service uses Gemini's latest language model to ensure:
+/// * High-quality translations
+/// * Natural language examples
+/// * Accurate word usage information
+/// * Context-appropriate definitions
+///
+/// API Response includes:
+/// * Word definitions in both languages
+/// * Usage examples
+/// * Persian translations and context
+/// * Related vocabulary and collocations
 class GeminiService {
   final String _apiKey = geminiApiKey;
   final String _model = 'gemini-2.0-flash';

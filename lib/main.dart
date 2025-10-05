@@ -6,8 +6,45 @@ import 'core/services/cache_service.dart';
 import 'presentation/providers/settings_provider.dart';
 import 'presentation/providers/word_provider.dart';
 import 'utils/theme.dart';
-import 'utils/app_router.dart'; // Import AppRouter
+import 'utils/app_router.dart';
 
+/// A vocabulary building application with spaced repetition and AI features.
+///
+/// This application helps users:
+/// * Learn vocabulary through spaced repetition
+/// * Get AI-powered word explanations
+/// * Track learning progress
+/// * Review words at optimal intervals
+///
+/// Key features:
+/// * Dark mode UI
+/// * Offline support
+/// * Persian localization
+/// * Cross-platform compatibility
+///
+/// The app uses:
+/// * Provider for state management
+/// * Hive for local storage
+/// * Google Cloud AI for word details
+/// * Material Design 3 for UI
+///
+/// To run the app:
+/// ```dart
+/// void main() {
+///   runApp(FutureBuilder(
+///     future: initializeApp(),
+///     builder: (context, snapshot) => const MyApp(),
+///   ));
+/// }
+/// ```
+
+/// Initializes essential app services and configurations.
+///
+/// This function:
+/// * Sets up the Flutter binding
+/// * Initializes date formatting
+/// * Sets up the cache service
+/// * Prepares the database
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('fa_IR', null);

@@ -1,12 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// [AppTheme] provides consistent theming across the application.
+///
+/// This class manages:
+/// * Color schemes
+/// * Typography
+/// * Spacing
+/// * Component themes
+///
+/// Features:
+/// * Dark mode optimization
+/// * Material 3 support
+/// * RTL compatibility
+/// * Accessibility considerations
+///
+/// Usage:
+/// ```dart
+/// Theme(
+///   data: AppTheme.darkTheme,
+///   child: MyApp(),
+/// )
+/// ```
 class AppTheme {
-  // Spacing constants
+  // Spacing constants following Material Design guidelines
+  /// Extra small spacing (4.0)
   static const double spacing_xs = 4.0;
+  /// Small spacing (8.0)
   static const double spacing_sm = 8.0;
+  /// Medium spacing (16.0)
   static const double spacing_md = 16.0;
+  /// Large spacing (24.0)
   static const double spacing_lg = 24.0;
+  /// Extra large spacing (32.0)
   static const double spacing_xl = 32.0;
 
   // Border radius constants

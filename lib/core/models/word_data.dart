@@ -3,6 +3,24 @@ import 'package:vocab_builder_app/core/models/persian_context.dart';
 
 part 'word_data.g.dart';
 
+/// [WordData] stores comprehensive information about a word.
+///
+/// This model contains:
+/// * Word definitions and meanings
+/// * Usage examples
+/// * Translations and contexts
+/// * Related vocabulary
+///
+/// The data is typically populated from:
+/// * AI-generated content
+/// * User-provided information
+/// * External dictionary sources
+///
+/// Features:
+/// * Hive persistence support
+/// * Rich text formatting
+/// * Multi-language support
+/// * Contextual information
 @HiveType(typeId: 1)
 class WordData {
   @HiveField(0)

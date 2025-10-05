@@ -7,6 +7,23 @@ import '../models/word_data.dart';
 import '../models/word_srs.dart';
 import '../models/word.dart';
 
+/// [CacheService] handles all local data persistence using Hive database.
+///
+/// This service is responsible for:
+/// * Managing word SRS (Spaced Repetition System) data
+/// * Storing word details and translations
+/// * Handling data caching and retrieval
+/// * Managing database initialization and box operations
+///
+/// The service uses two main storage boxes:
+/// * SRS Box: Stores learning progress and review scheduling
+/// * Details Box: Stores word definitions, examples, and translations
+///
+/// Usage:
+/// ```dart
+/// final cache = CacheService.instance;
+/// await cache.init(); // Must be called before any other operations
+/// ```
 class CacheService {
   // Box names act like table names in a traditional database.
   static const _srsBoxName = 'word_srs_box';
