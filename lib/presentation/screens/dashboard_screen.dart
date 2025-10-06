@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/word_provider.dart';
+import '../../core/providers/word_notifier.dart'; // Import the Riverpod notifier
  // Import WordListScreen
 import '../../utils/app_router.dart'; // Import AppRouter
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final wordState = ref.watch(wordNotifierProvider);
+    final words = wordState.value ?? [];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
           // The review button code remains here...
-          Consumer<WordProvider>(
-            builder: (context, provider, child) {
-              final dueCount = provider.dueForReviewWords.length;
+          wordState.when(
+            data: (wordList) {
+              final dueForReviewWords = wordList.where((word) => word.dueDate.isBefore(DateTime.now())).toList();
+              final dueCount = dueForReviewWords.length;
               if (dueCount == 0) return const SizedBox.shrink();
 
               return TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).pushNamed(
                     AppRouter.reviewRoute, // Use named route
-                    arguments: provider.dueForReviewWords,
+                    arguments: dueForReviewWords,
                   );
                 },
                 icon: Text('$dueCount'),
@@ -32,6 +36,8 @@ class DashboardScreen extends StatelessWidget {
                 style: TextButton.styleFrom(foregroundColor: Colors.white),
               );
             },
+            loading: () => const SizedBox.shrink(), // Or a loading indicator
+            error: (e, st) => const SizedBox.shrink(), // Or an error indicator
           ),
           // Add this IconButton for settings
           IconButton(
@@ -49,15 +55,10 @@ class DashboardScreen extends StatelessWidget {
           // ),
         ],
       ),
-      body: Consumer<WordProvider>(
-        builder: (context, provider, child) {
-          // Show a loading spinner only on initial load
-          if (provider.isLoading && provider.words.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
+      body: wordState.when(
+        data: (wordList) {
           // Show a message if the list of words is empty
-          if (provider.words.isEmpty) {
+          if (wordList.isEmpty) {
             return const Center(
               child: Text(
                 'هنوز کلمه‌ای اضافه نکرده‌اید.\nبرای شروع، روی دکمه + کلیک کنید.',
@@ -69,9 +70,9 @@ class DashboardScreen extends StatelessWidget {
 
           // Display the list of words
           return ListView.builder(
-            itemCount: provider.words.length,
+            itemCount: wordList.length,
             itemBuilder: (context, index) {
-              final word = provider.words[index];
+              final word = wordList[index];
               final isDue = word.dueDate.isBefore(DateTime.now());
 
               return ListTile(
@@ -92,6 +93,8 @@ class DashboardScreen extends StatelessWidget {
             },
           );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Error: ${e.toString()}')),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
