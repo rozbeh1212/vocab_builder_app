@@ -7,6 +7,8 @@ import '../models/word_data.dart';
 import '../models/word_srs.dart';
 import '../models/word.dart';
 import '../models/fsrs_card_data.dart';
+import '../models/user_profile.dart';
+import '../models/achievement.dart';
 
 /// [CacheService] handles all local data persistence using Hive database.
 ///
@@ -39,6 +41,8 @@ class CacheService {
   Box<WordSRS>? _srsBox;
   Box<WordData>? _detailsBox;
   // Box<FsrsCardData>? _cardsBox; // currently unused; keep open in future for FSRS cards
+  Box<UserProfile>? _userProfileBox;
+  Box<Achievement>? _achievementsBox;
 
   Future<void> init() async {
     // For web, Hive uses its own storage. For mobile, we need a path.
@@ -62,11 +66,19 @@ class CacheService {
     if (!Hive.isAdapterRegistered(FsrsCardDataAdapter().typeId)) {
       Hive.registerAdapter(FsrsCardDataAdapter());
     }
+    if (!Hive.isAdapterRegistered(UserProfileAdapter().typeId)) {
+      Hive.registerAdapter(UserProfileAdapter());
+    }
+    if (!Hive.isAdapterRegistered(AchievementAdapter().typeId)) {
+      Hive.registerAdapter(AchievementAdapter());
+    }
 
     // Only open boxes if they're not already open
     _srsBox = await Hive.openBox<WordSRS>(_srsBoxName);
     _detailsBox = await Hive.openBox<WordData>(_detailsBoxName);
-  // Note: fsrs_cards_box opening is deferred until FSRS features are used.
+    // Note: fsrs_cards_box opening is deferred until FSRS features are used.
+    _userProfileBox = await Hive.openBox<UserProfile>('user_profile_box');
+    _achievementsBox = await Hive.openBox<Achievement>('achievements_box');
   }
 
   Future<Box<WordSRS>> get srsBox async {
@@ -81,6 +93,20 @@ class CacheService {
       _detailsBox = await Hive.openBox<WordData>(_detailsBoxName);
     }
     return _detailsBox!;
+  }
+
+  Future<Box<UserProfile>> get userProfileBox async {
+    if (_userProfileBox == null || !_userProfileBox!.isOpen) {
+      _userProfileBox = await Hive.openBox<UserProfile>('user_profile_box');
+    }
+    return _userProfileBox!;
+  }
+
+  Future<Box<Achievement>> get achievementsBox async {
+    if (_achievementsBox == null || !_achievementsBox!.isOpen) {
+      _achievementsBox = await Hive.openBox<Achievement>('achievements_box');
+    }
+    return _achievementsBox!;
   }
 
   Future<List<Word>> getWords() async {
@@ -98,8 +124,12 @@ class CacheService {
   Future<void> clear() async {
     final srsBox = await this.srsBox;
     final detailsBox = await this.detailsBox;
+    final userProfileBox = await this.userProfileBox;
+    final achievementsBox = await this.achievementsBox;
     await srsBox.clear();
     await detailsBox.clear();
+    await userProfileBox.clear();
+    await achievementsBox.clear();
   }
 
   Future<void> addWord(Word word) async {

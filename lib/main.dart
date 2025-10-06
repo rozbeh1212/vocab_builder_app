@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart' as p;
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/services/cache_service.dart';
 import 'core/providers/settings_notifier.dart';
-import 'presentation/providers/word_provider.dart';
 import 'utils/theme.dart';
 import 'utils/app_router.dart';
 
@@ -94,26 +92,21 @@ class MyApp extends ConsumerWidget {
       },
     );
 
-    return p.MultiProvider(
-      providers: [
-        p.ChangeNotifierProvider(create: (_) => WordProvider()),
+    return MaterialApp(
+      title: 'Vocab Builder',
+      theme: AppTheme.darkTheme.copyWith(pageTransitionsTheme: pageTransitionsTheme),
+      darkTheme: AppTheme.darkTheme.copyWith(pageTransitionsTheme: pageTransitionsTheme),
+      themeMode: settings.themeMode,
+      onGenerateRoute: AppRouter.generateRoute,
+      initialRoute: AppRouter.mainRoute,
+      locale: const Locale('fa', 'IR'),
+      supportedLocales: const [Locale('fa', 'IR'), Locale('en', 'US')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
-      child: MaterialApp(
-        title: 'Vocab Builder',
-        theme: AppTheme.darkTheme.copyWith(pageTransitionsTheme: pageTransitionsTheme),
-        darkTheme: AppTheme.darkTheme.copyWith(pageTransitionsTheme: pageTransitionsTheme),
-        themeMode: settings.themeMode,
-        onGenerateRoute: AppRouter.generateRoute,
-        initialRoute: AppRouter.mainRoute,
-        locale: const Locale('fa', 'IR'),
-        supportedLocales: const [Locale('fa', 'IR'), Locale('en', 'US')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        debugShowCheckedModeBanner: false,
-      ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

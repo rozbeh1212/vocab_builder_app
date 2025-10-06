@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word_data.dart';
 import '../../utils/date_formatter.dart';
-import '../providers/word_provider.dart';
+import '../../core/providers/word_notifier.dart'; // Import the Riverpod notifier
 import '../widgets/word/word_details_display.dart';
 
 class _ReviewButton extends StatelessWidget {
@@ -46,16 +46,16 @@ class _ReviewButton extends StatelessWidget {
   }
 }
 
-class WordDetailScreen extends StatefulWidget {
+class WordDetailScreen extends ConsumerStatefulWidget {
   final String word;
 
   const WordDetailScreen({super.key, required this.word});
 
   @override
-  State<WordDetailScreen> createState() => _WordDetailScreenState();
+  ConsumerState<WordDetailScreen> createState() => _WordDetailScreenState();
 }
 
-class _WordDetailScreenState extends State<WordDetailScreen> {
+class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
   @override
   void initState() {
     super.initState();
@@ -68,11 +68,13 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       appBar: AppBar(
         title: Text(widget.word),
       ),
-      body: Consumer<WordProvider>(
-        builder: (context, provider, child) {
-          // Show details while allowing explicit add to SRS
+      body: Consumer(
+        builder: (context, ref, child) {
+          final wordNotifier = ref.read(wordNotifierProvider.notifier);
+          final srsWords = ref.watch(wordNotifierProvider).value ?? [];
+
           return FutureBuilder<WordData?>(
-            future: provider.getWordDetails(widget.word),
+            future: wordNotifier.getWordDetails(widget.word),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
@@ -98,7 +100,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                 );
               }
 
-              final inSrs = provider.words.any((s) => s.word.toLowerCase() == widget.word.toLowerCase());
+              final inSrs = srsWords.any((s) => s.word.toLowerCase() == widget.word.toLowerCase());
               final wordData = snapshot.data!;
 
               return Column(
@@ -113,13 +115,15 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                           onPressed: inSrs
                               ? null
                               : () async {
-                                  await provider.addWord(widget.word);
-                                  if (provider.error != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(provider.error!)));
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added "${widget.word}" to SRS')));
-                                  }
-                                  setState(() {});
+                                  await wordNotifier.addWord(widget.word);
+                                  ref.read(wordNotifierProvider).whenOrNull(
+                                    error: (e, st) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+                                    },
+                                    data: (words) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added "${widget.word}" to SRS')));
+                                    },
+                                  );
                                 },
                           icon: const Icon(Icons.add),
                           label: Text(inSrs ? 'In SRS' : 'Add to SRS'),
@@ -131,7 +135,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                               showModalBottomSheet(
                                 context: context,
                                 builder: (_) {
-                                  final wordSrs = provider.words.firstWhere((s) => s.word.toLowerCase() == widget.word.toLowerCase());
+                                  final wordSrs = srsWords.firstWhere((s) => s.word.toLowerCase() == widget.word.toLowerCase());
                                   return Container(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Column(
@@ -156,7 +160,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                                           label: 'Again',
                                           description: 'Needs more practice',
                                           onPressed: () async {
-                                            await provider.updateWordAfterReview(wordSrs, 1);
+                                            await wordNotifier.updateWordAfterReview(wordSrs, 1);
                                             if (mounted) Navigator.of(context).pop();
                                           },
                                         ),
@@ -165,7 +169,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                                           label: 'Good',
                                           description: 'Remembered with effort',
                                           onPressed: () async {
-                                            await provider.updateWordAfterReview(wordSrs, 3);
+                                            await wordNotifier.updateWordAfterReview(wordSrs, 3);
                                             if (mounted) Navigator.of(context).pop();
                                           },
                                         ),
@@ -174,7 +178,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
                                           label: 'Easy',
                                           description: 'Perfect recall',
                                           onPressed: () async {
-                                            await provider.updateWordAfterReview(wordSrs, 5);
+                                            await wordNotifier.updateWordAfterReview(wordSrs, 5);
                                             if (mounted) Navigator.of(context).pop();
                                           },
                                         ),

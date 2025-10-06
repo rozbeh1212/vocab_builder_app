@@ -91,28 +91,6 @@ class WordProvider with ChangeNotifier {
     }
   }
 
-  /// Retrieves word details from cache or fetches them if needed
-  Future<WordData?> getWordDetails(String word) async {
-    try {
-      // First try to get from cache
-      WordData? details = await _cacheService.getWordDetails(word);
-      if (details != null) {
-        return details;
-      }
-      
-      // If not in cache, fetch from Gemini
-      developer.log('Fetching details for word: $word');
-      details = await _geminiService.getWordDetails(word);
-      if (details != null) {
-        await _cacheService.saveWordDetails(word, details);
-      }
-      return details;
-    } catch (e) {
-      developer.log('Error getting word details: $word', error: e);
-      return null;
-    }
-  }
-
   /// Updates a word's SRS data after a review
   Future<void> updateWordAfterReview(WordSRS word, int quality) async {
     try {

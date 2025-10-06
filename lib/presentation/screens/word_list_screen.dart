@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word.dart';
 import '../../core/services/word_service.dart';
 import '../../core/providers/word_notifier.dart';
-import '../../utils/date_formatter.dart';
+import '../../utils/date_formatter.dart'; // Ensure this import is present
+import '../../core/models/word_srs.dart'; // Ensure WordSRS is imported
 import 'word_detail_screen.dart';
 import '../widgets/common/app_loader.dart';
 
@@ -53,7 +54,7 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
         ),
         const SizedBox(width: 4),
         Text(
-          srsWord.dueDate.reviewDateDisplay,
+          srsWord.dueDate.reviewDateDisplay, // Removed '!' as dueDate is non-nullable
           style: TextStyle(
             color: Theme.of(context).colorScheme.primary,
             fontSize: 12,

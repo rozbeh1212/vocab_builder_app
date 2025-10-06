@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flip_card/flip_card.dart'; // Import the package
 
 import '../../core/models/word_srs.dart';
 import '../../core/models/word_data.dart';
-import '../providers/word_provider.dart';
+import '../../core/providers/word_notifier.dart'; // Import the Riverpod notifier
 import '../widgets/word/word_details_display.dart';
 
-class ReviewScreen extends StatefulWidget {
+class ReviewScreen extends ConsumerStatefulWidget {
   final List<WordSRS> wordsToReview;
   const ReviewScreen({super.key, required this.wordsToReview});
 
   @override
-  State<ReviewScreen> createState() => _ReviewScreenState();
+  ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
 }
 
-class _ReviewScreenState extends State<ReviewScreen> {
+class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   int _currentIndex = 0;
   bool _isUpdating = false;
-  // We no longer need the _isFlipped variable!
-  // The FlipCard widget will manage its own state.
   GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
 
 
@@ -29,12 +27,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
       _isUpdating = true;
     });
 
-  final provider = Provider.of<WordProvider>(context, listen: false);
-  // Capture navigator and messenger before the async call to avoid
-  // using BuildContext across async gaps.
-  final navigator = Navigator.of(context);
-  final messenger = ScaffoldMessenger.of(context);
-  await provider.updateWordAfterReview(widget.wordsToReview[_currentIndex], quality);
+    final wordNotifier = ref.read(wordNotifierProvider.notifier);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    await wordNotifier.updateWordAfterReview(widget.wordsToReview[_currentIndex], quality);
 
     if (_currentIndex < widget.wordsToReview.length - 1) {
       setState(() {
@@ -57,7 +53,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final currentWordSRS = widget.wordsToReview[_currentIndex];
-    final wordProvider = Provider.of<WordProvider>(context, listen: false);
+    final wordNotifier = ref.read(wordNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -83,7 +79,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               back: Card( // The back of the card
                 margin: const EdgeInsets.all(16),
                 child: FutureBuilder<WordData?>(
-                  future: wordProvider.getWordDetails(currentWordSRS.word),
+                  future: wordNotifier.getWordDetails(currentWordSRS.word),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());

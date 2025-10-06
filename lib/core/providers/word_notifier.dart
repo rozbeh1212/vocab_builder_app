@@ -70,4 +70,25 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
       state = AsyncValue.error(e, st);
     }
   }
+
+  /// Retrieves word details from cache or fetches them if needed
+  Future<WordData?> getWordDetails(String word) async {
+    try {
+      // First try to get from cache
+      WordData? details = await _cacheService.getWordDetails(word);
+      if (details != null) {
+        return details;
+      }
+      
+      // If not in cache, fetch from Gemini
+      details = await _geminiService.getWordDetails(word);
+      if (details != null) {
+        await _cacheService.saveWordDetails(word, details);
+      }
+      return details;
+    } catch (e) {
+      // For now, just return null on error. Consider more robust error handling.
+      return null;
+    }
+  }
 }
