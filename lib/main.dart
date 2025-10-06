@@ -1,52 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart' as p;
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/services/cache_service.dart';
-import 'presentation/providers/settings_provider.dart';
+import 'core/providers/settings_notifier.dart';
 import 'presentation/providers/word_provider.dart';
 import 'utils/theme.dart';
 import 'utils/app_router.dart';
 
-/// A vocabulary building application with spaced repetition and AI features.
-///
-/// This application helps users:
-/// * Learn vocabulary through spaced repetition
-/// * Get AI-powered word explanations
-/// * Track learning progress
-/// * Review words at optimal intervals
-///
-/// Key features:
-/// * Dark mode UI
-/// * Offline support
-/// * Persian localization
-/// * Cross-platform compatibility
-///
-/// The app uses:
-/// * Provider for state management
-/// * Hive for local storage
-/// * Google Cloud AI for word details
-/// * Material Design 3 for UI
-///
-/// To run the app:
-/// ```dart
-/// void main() {
-///   runApp(FutureBuilder(
-///     future: initializeApp(),
-///     builder: (context, snapshot) => const MyApp(),
-///   ));
-/// }
-/// ```
-
-/// Initializes essential app services and configurations.
-///
-/// This function:
-/// * Sets up the Flutter binding
-/// * Initializes date formatting
-/// * Sets up the cache service
-/// * Prepares the database
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('fa_IR', null);
@@ -54,58 +17,59 @@ Future<void> initializeApp() async {
 }
 
 void main() {
-  // Catch any errors during app initialization
   runZonedGuarded(() {
-    runApp(FutureBuilder(
-      future: initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error initializing app:',
-                      style: TextStyle(
-                        color: Colors.red[700],
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+    runApp(ProviderScope(
+      child: FutureBuilder<void>(
+        future: initializeApp(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Text(
-                        '${snapshot.error}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error initializing app:',
+                        style: TextStyle(
+                          color: Colors.red[700],
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          '${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const MaterialApp(
+              home: Scaffold(
+                body: Center(child: CircularProgressIndicator()),
               ),
-            ),
-          );
-        }
-        return const MyApp();
-      },
+            );
+          }
+
+          return const MyApp();
+        },
+      ),
     ));
   }, (error, stack) {
     debugPrint('Error: $error');
@@ -113,58 +77,47 @@ void main() {
   });
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsNotifierProvider);
+
+    final pageTransitionsTheme = PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: const CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: const CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: const CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: const CupertinoPageTransitionsBuilder(),
+        TargetPlatform.linux: const CupertinoPageTransitionsBuilder(),
+      },
+    );
+
+    return p.MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => WordProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        p.ChangeNotifierProvider(create: (_) => WordProvider()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settingsProvider, child) {
-          // Add smooth page transitions
-          const pageTransitionsTheme = PageTransitionsTheme(
-            builders: {
-              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-              TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
-              TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-              TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
-            },
-          );
-          return MaterialApp(
-            title: 'Vocab Builder',
-            theme: AppTheme.darkTheme.copyWith(
-              pageTransitionsTheme: pageTransitionsTheme,
-            ),
-            darkTheme: AppTheme.darkTheme.copyWith(
-              pageTransitionsTheme: pageTransitionsTheme,
-            ),
-            themeMode: ThemeMode.dark,
-            onGenerateRoute: AppRouter.generateRoute,
-            initialRoute: AppRouter.mainRoute,
-            // Use Persian (Farsi) as the app locale and provide localization
-            // delegates so built-in widgets adapt to RTL and Persian formats.
-            locale: const Locale('fa', 'IR'),
-            supportedLocales: const [
-              Locale('fa', 'IR'),
-              Locale('en', 'US'),
-            ],
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            debugShowCheckedModeBanner: false,
-          );
-        },
+      child: MaterialApp(
+        title: 'Vocab Builder',
+        theme: AppTheme.darkTheme.copyWith(pageTransitionsTheme: pageTransitionsTheme),
+        darkTheme: AppTheme.darkTheme.copyWith(pageTransitionsTheme: pageTransitionsTheme),
+        themeMode: settings.themeMode,
+        onGenerateRoute: AppRouter.generateRoute,
+        initialRoute: AppRouter.mainRoute,
+        locale: const Locale('fa', 'IR'),
+        supportedLocales: const [Locale('fa', 'IR'), Locale('en', 'US')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
 }
+
 
 
 

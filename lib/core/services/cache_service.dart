@@ -6,6 +6,7 @@ import '../models/persian_context.dart';
 import '../models/word_data.dart';
 import '../models/word_srs.dart';
 import '../models/word.dart';
+import '../models/fsrs_card_data.dart';
 
 /// [CacheService] handles all local data persistence using Hive database.
 ///
@@ -37,6 +38,7 @@ class CacheService {
   /// This MUST be called in main.dart before runApp().
   Box<WordSRS>? _srsBox;
   Box<WordData>? _detailsBox;
+  // Box<FsrsCardData>? _cardsBox; // currently unused; keep open in future for FSRS cards
 
   Future<void> init() async {
     // For web, Hive uses its own storage. For mobile, we need a path.
@@ -57,10 +59,14 @@ class CacheService {
     if (!Hive.isAdapterRegistered(PersianContextAdapter().typeId)) {
       Hive.registerAdapter(PersianContextAdapter());
     }
+    if (!Hive.isAdapterRegistered(FsrsCardDataAdapter().typeId)) {
+      Hive.registerAdapter(FsrsCardDataAdapter());
+    }
 
     // Only open boxes if they're not already open
     _srsBox = await Hive.openBox<WordSRS>(_srsBoxName);
     _detailsBox = await Hive.openBox<WordData>(_detailsBoxName);
+  // Note: fsrs_cards_box opening is deferred until FSRS features are used.
   }
 
   Future<Box<WordSRS>> get srsBox async {

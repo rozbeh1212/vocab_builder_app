@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/word_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/providers/word_notifier.dart';
 
-class AddWordScreen extends StatefulWidget {
+class AddWordScreen extends ConsumerStatefulWidget {
   const AddWordScreen({super.key});
 
   @override
-  State<AddWordScreen> createState() => _AddWordScreenState();
+  ConsumerState<AddWordScreen> createState() => _AddWordScreenState();
 }
 
-class _AddWordScreenState extends State<AddWordScreen> {
+class _AddWordScreenState extends ConsumerState<AddWordScreen> {
   final _textController = TextEditingController();
 
   @override
@@ -18,35 +18,37 @@ class _AddWordScreenState extends State<AddWordScreen> {
     super.dispose();
   }
 
-  // In lib/presentation/screens/add_word_screen.dart
-
   Future<void> _submitWord() async {
     final word = _textController.text.trim();
     if (word.isEmpty) {
       return;
     }
 
-    final provider = Provider.of<WordProvider>(context, listen: false);
-    await provider.addWord(word);
+    final wordNotifier = ref.read(wordNotifierProvider.notifier);
+    await wordNotifier.addWord(word);
 
     if (mounted) {
-      if (provider.error == null) {
-        // Show success message BEFORE popping
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('کلمه "$word" با موفقیت اضافه شد!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(provider.error!),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Watch the state of the notifier to react to changes
+      final currentWordState = ref.read(wordNotifierProvider);
+      currentWordState.whenOrNull(
+        error: (e, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+        data: (words) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('کلمه "$word" با موفقیت اضافه شد!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.of(context).pop();
+        },
+      );
     }
   }
 
@@ -70,15 +72,16 @@ class _AddWordScreenState extends State<AddWordScreen> {
               autofocus: true,
             ),
             const SizedBox(height: 20),
-            // Use a Consumer here to react to loading state changes for the button
-            Consumer<WordProvider>(
-              builder: (context, provider, child) {
+            Consumer(
+              builder: (context, ref, child) {
+                final wordState = ref.watch(wordNotifierProvider);
+                final isLoading = wordState.isLoading;
                 return ElevatedButton(
-                  onPressed: provider.isLoading ? null : _submitWord,
+                  onPressed: isLoading ? null : _submitWord,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: provider.isLoading
+                  child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Add Word'),
                 );
@@ -89,6 +92,5 @@ class _AddWordScreenState extends State<AddWordScreen> {
       ),
     );
   }
-} 
- 
- 
+}
+

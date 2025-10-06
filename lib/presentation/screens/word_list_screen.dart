@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word.dart';
 import '../../core/services/word_service.dart';
-import '../providers/word_provider.dart';
+import '../../core/providers/word_notifier.dart';
+import '../../utils/date_formatter.dart';
 import 'word_detail_screen.dart';
 import '../widgets/common/app_loader.dart';
-import '../../utils/date_formatter.dart';
 
-class WordListScreen extends StatefulWidget {
+class WordListScreen extends ConsumerStatefulWidget {
   final String category;
   const WordListScreen({super.key, required this.category});
 
   @override
-  State<WordListScreen> createState() => _WordListScreenState();
+  ConsumerState<WordListScreen> createState() => _WordListScreenState();
 }
 
-class _WordListScreenState extends State<WordListScreen> {
+class _WordListScreenState extends ConsumerState<WordListScreen> {
   late Future<List<Word>> _wordsFuture;
   final WordService _wordService = WordService();
   final TextEditingController _searchController = TextEditingController();
@@ -41,8 +41,8 @@ class _WordListScreenState extends State<WordListScreen> {
     await _wordsFuture;
   }
 
-  Widget _buildSrsStatus(BuildContext context, WordProvider provider, String word) {
-    final srsWord = provider.words.firstWhere((w) => w.word.toLowerCase() == word.toLowerCase());
+  Widget _buildSrsStatus(BuildContext context, List<WordSRS> srsWords, String word) {
+    final srsWord = srsWords.firstWhere((w) => w.word.toLowerCase() == word.toLowerCase());
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -102,8 +102,11 @@ class _WordListScreenState extends State<WordListScreen> {
           ),
         ),
       ),
-      body: Consumer<WordProvider>(
-        builder: (context, provider, _) {
+      body: Consumer(
+        builder: (context, ref, _) {
+          final wordState = ref.watch(wordNotifierProvider);
+          final srsWords = wordState.value ?? [];
+
           return FutureBuilder<List<Word>>(
             future: _wordsFuture,
             builder: (context, snapshot) {
@@ -132,7 +135,7 @@ class _WordListScreenState extends State<WordListScreen> {
               }
 
               if (snapshot.connectionState == ConnectionState.waiting || 
-                  provider.isLoading) {
+                  wordState.isLoading) {
                 return const Center(child: AppLoader());
               }
 
@@ -169,7 +172,7 @@ class _WordListScreenState extends State<WordListScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final word = words[index];
-                    final inSrs = provider.words.any((s) => s.word.toLowerCase() == word.word.toLowerCase());
+                    final inSrs = srsWords.any((s) => s.word.toLowerCase() == word.word.toLowerCase());
                     return ListTile(
                       leading: CircleAvatar(child: Text(word.word[0].toUpperCase())),
                       title: Text(word.word, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -177,7 +180,7 @@ class _WordListScreenState extends State<WordListScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (word.meaning != null) Text(word.meaning!),
-                          if (inSrs) ...[const SizedBox(height: 4), _buildSrsStatus(context, provider, word.word)],
+                          if (inSrs) ...[const SizedBox(height: 4), _buildSrsStatus(context, srsWords, word.word)],
                         ],
                       ),
                       trailing: IconButton(
@@ -186,16 +189,21 @@ class _WordListScreenState extends State<WordListScreen> {
                         onPressed: inSrs
                             ? null
                             : () async {
-                                await provider.addWord(word.word);
-                                if (provider.error != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(provider.error!)),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Added "${word.word}" to SRS')),
-                                  );
-                                }
+                                final wordNotifier = ref.read(wordNotifierProvider.notifier);
+                                await wordNotifier.addWord(word.word);
+                                // Check for error from the notifier's state
+                                ref.read(wordNotifierProvider).whenOrNull(
+                                  error: (e, st) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: ${e.toString()}')),
+                                    );
+                                  },
+                                  data: (words) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Added "${word.word}" to SRS')),
+                                    );
+                                  },
+                                );
                               },
                       ),
                       onTap: () {
