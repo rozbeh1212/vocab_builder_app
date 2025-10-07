@@ -45,7 +45,8 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               );
             },
-            orElse: () => const SizedBox.shrink(),
+            loading: () => const SizedBox.shrink(),
+            error: (e, st) => const SizedBox.shrink(),
           ),
           IconButton(
             icon: const Icon(Icons.add),

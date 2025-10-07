@@ -37,7 +37,7 @@ class SRSService {
         repetition: newRepetition,
         interval: newInterval,
         efactor: newEfactor,
-        dueDate: DateTime.now().add(Duration(days: newInterval)),
+        dueDate: DateTime.now().add(const Duration(days: newInterval)),
       );
     } else {
       // If recall was successful (quality >= 3)

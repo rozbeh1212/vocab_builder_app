@@ -47,7 +47,7 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
       _loadWordsFromAssets();
     });
     // Also refresh the SRS words from the cache
-    await ref.refresh(wordNotifierProvider.future);
+    ref.refresh(wordNotifierProvider);
   }
 
   Widget _buildSrsStatus(BuildContext context, WordSRS srsWord) {
@@ -190,12 +190,13 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
                         onPressed: isInSrs
                             ? null // Disable button if word is already in SRS
                             : () async {
+                                final messenger = ScaffoldMessenger.of(context);
                                 final notifier = ref.read(wordNotifierProvider.notifier);
                                 await notifier.addWord(word.word);
                                 // The UI will update automatically via the provider watcher,
                                 // but we can show a confirmation snackbar.
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(
                                       content: Text('Added "${word.word}" to your list.'),
                                       backgroundColor: Colors.green,

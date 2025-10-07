@@ -10,8 +10,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the settings provider to get the current state.
     final settings = ref.watch(settingsNotifierProvider);
-    // Get the notifier to call methods on it.
-    final settingsNotifier = ref.read(settingsNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
