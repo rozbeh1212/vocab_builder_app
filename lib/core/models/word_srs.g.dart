@@ -51,3 +51,23 @@ class WordSRSAdapter extends TypeAdapter<WordSRS> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+WordSRS _$WordSRSFromJson(Map<String, dynamic> json) => WordSRS(
+      word: json['word'] as String,
+      dueDate: DateTime.parse(json['dueDate'] as String),
+      repetition: (json['repetition'] as num?)?.toInt() ?? 0,
+      interval: (json['interval'] as num?)?.toInt() ?? 0,
+      efactor: (json['efactor'] as num?)?.toDouble() ?? 2.5,
+    );
+
+Map<String, dynamic> _$WordSRSToJson(WordSRS instance) => <String, dynamic>{
+      'word': instance.word,
+      'dueDate': instance.dueDate.toIso8601String(),
+      'repetition': instance.repetition,
+      'interval': instance.interval,
+      'efactor': instance.efactor,
+    };

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
+import '../../../core/models/persian_context.dart';
 import '../../../core/models/word_data.dart';
 
+/// [FlashcardWidget] is a flippable card used in review sessions.
+///
+/// The front of the card displays the word, and the back displays its
+/// detailed information, including definition, examples, and Persian contexts.
 class FlashcardWidget extends StatelessWidget {
   final WordData wordData;
 
@@ -16,69 +21,140 @@ class FlashcardWidget extends StatelessWidget {
     );
   }
 
+  /// Builds the front side of the flashcard, showing only the word.
   Widget _buildFront(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 4,
       margin: const EdgeInsets.all(16),
       child: Center(
         child: Text(
           wordData.word,
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.displaySmall
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 
+  /// Builds the back side of the flashcard, showing detailed information.
   Widget _buildBack(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 4,
       margin: const EdgeInsets.all(16),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(wordData.word, style: Theme.of(context).textTheme.headlineMedium),
-            Text(wordData.pronunciation, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
-            const SizedBox(height: 16),
-            Text('Definition:', style: Theme.of(context).textTheme.titleSmall),
-            Text(wordData.definition),
-            const SizedBox(height: 16),
-            if (wordData.synonyms.isNotEmpty) ...[
-              Text('Synonyms:', style: Theme.of(context).textTheme.titleSmall),
-              Text(wordData.synonyms.join(', ')),
-              const SizedBox(height: 16),
-            ],
-            Text('Example:', style: Theme.of(context).textTheme.titleSmall),
-            Text(wordData.example, style: const TextStyle(fontStyle: FontStyle.italic)),
-            const Divider(height: 32),
-            ...wordData.persianContexts.map((ctx) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(ctx.meaning, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(ctx.example, style: const TextStyle(color: Colors.black87, fontStyle: FontStyle.italic)),
-                  if (ctx.usageNotes != null && ctx.usageNotes!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text('Usage Notes:', style: Theme.of(context).textTheme.labelSmall),
-                    Text(ctx.usageNotes!),
-                  ],
-                  if (ctx.collocations != null && ctx.collocations!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text('Collocations:', style: Theme.of(context).textTheme.labelSmall),
-                    Text(ctx.collocations!.join(', ')),
-                  ],
-                  if (ctx.prepositionUsage != null && ctx.prepositionUsage!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text('Preposition Usage:', style: Theme.of(context).textTheme.labelSmall),
-                    Text(ctx.prepositionUsage!),
-                  ],
-                ],
+            Text(wordData.word, style: theme.textTheme.headlineMedium),
+            Text(
+              wordData.pronunciation ?? '',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
-            )),
+            ),
+            const Divider(height: 32),
+            _buildSection(context, 'Definition', wordData.definition ?? ''),
+            if (wordData.synonyms?.isNotEmpty ?? false)
+              _buildSection(context, 'Synonyms', wordData.synonyms?.join(', ') ?? ''),
+            _buildSection(
+              context,
+              'Example',
+              wordData.example ?? '',
+              isItalic: true,
+            ),
+            const Divider(height: 32),
+            ...?wordData.persianContexts?.map(
+              (ctx) => _buildPersianContext(context, ctx),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Helper widget for creating a titled section.
+  Widget _buildSection(BuildContext context, String title, String content,
+      {bool isItalic = false}) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            content,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the display for a single [PersianContext] object.
+  Widget _buildPersianContext(BuildContext context, PersianContext ctx) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            ctx.meaning,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Vazirmatn', // Assuming a Persian font is configured
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            ctx.example,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontStyle: FontStyle.italic,
+              fontFamily: 'Vazirmatn',
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+            ),
+          ),
+          if (ctx.usageNotes?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 8),
+            _buildSubDetail(context, 'Usage Notes:', ctx.usageNotes!),
+          ],
+          if (ctx.collocations.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _buildSubDetail(context, 'Collocations:', ctx.collocations.join(', ')),
+          ],
+          if (ctx.prepositionUsage?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 4),
+            _buildSubDetail(context, 'Prepositions:', ctx.prepositionUsage!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Helper for rendering smaller details within a Persian context.
+  Widget _buildSubDetail(BuildContext context, String title, String content) {
+    final theme = Theme.of(context);
+    return RichText(
+      text: TextSpan(
+        style: theme.textTheme.bodyMedium,
+        children: [
+          TextSpan(
+            text: title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextSpan(text: ' $content'),
+        ],
       ),
     );
   }

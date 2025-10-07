@@ -31,95 +31,137 @@ class GeminiService {
   Future<WordData?> getWordDetails(String word) async {
     final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent?key=$_apiKey');
 
+  
     final prompt = """
-      Provide detailed information for the English word "$word", including English definitions with examples, synonyms, and comprehensive Persian context (translations, usage notes, collocations, preposition usage).
-      The JSON object must have these exact keys: "word", "pronunciation", "definition", "example", "synonyms", and "persian_contexts".
-      "synonyms" must be an array of strings.
-      "persian_contexts" must be an array of objects, where each object has "persian_translation", "persian_example", "usage_notes", "collocations", and "preposition_usage" keys.
-      "collocations" must be an array of strings.
-      Provide only one definition and one main example. Provide 2 persian contexts.
-      Do not include any text before or after the JSON object. Do not use markdown.
-      
-      Example for the word "integrate":
+      Provide detailed information for the English word "$word". The response must be a single, raw JSON object without any markdown formatting, comments, or surrounding text.
+
+      The JSON object must adhere to the following strict structure:
       {
-        "word": "integrate",
-        "pronunciation": "/ˈɪntəˌɡreɪt/",
-        "definition": "To combine one thing with another so that they become a whole.",
-        "example": "He didn't integrate well into the new team.",
-        "synonyms": ["combine", "unite", "merge"],
+        "word": "...",
+        "pronunciation": "...",
+        "definition": "...",
+        "example": "...",
+        "synonyms": ["...", "..."],
         "persian_contexts": [
           {
-            "persian_translation": "ادغام کردن",
-            "persian_example": "ما باید سیستم جدید را با سیستم قدیمی ادغام کنیم.",
-            "usage_notes": "معمولاً برای ترکیب دو یا چند چیز به یک کل واحد استفاده می‌شود.",
-            "collocations": ["integrate into", "integrate with", "fully integrate"],
-            "preposition_usage": "integrate into (a system), integrate with (a group)"
+            "persian_translation": "...",
+            "persian_example": "...",
+            "usage_notes": "...",
+            "collocations": ["...", "..."],
+            "preposition_usage": "..."
           },
           {
-            "persian_translation": "یکپارچه ساختن",
-            "persian_example": "هدف این پروژه یکپارچه ساختن خدمات مختلف است.",
-            "usage_notes": "می‌تواند به معنای آوردن افراد یا گروه‌ها به یک جامعه یا سازمان باشد.",
-            "collocations": ["integrate services", "integrate components"],
-            "preposition_usage": "integrate into (society), integrate with (existing structures)"
+            "persian_translation": "...",
+            "persian_example": "...",
+            "usage_notes": "...",
+            "collocations": ["...", "..."],
+            "preposition_usage": "..."
           }
         ]
       }
+
+      Rules:
+      - Provide exactly one English definition and one main English example.
+      - Provide exactly two distinct Persian contexts.
+      - Ensure all keys are present, even if their values are empty arrays or empty strings.
+      - The "word" key in the JSON should be the exact word requested.
+      - Do not include backticks (```json), markdown, or any text outside of the JSON object itself.
     """;
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'contents': [{'parts': [{'text': prompt}]}]}),
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ]
+        }),
       );
 
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
-        String jsonString = responseBody['candidates'][0]['content']['parts'][0]['text'];
-        
+        final candidates = responseBody['candidates'] as List?;
+        if (candidates == null || candidates.isEmpty) {
+          throw Exception('No candidates found in Gemini response.');
+        }
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts == null || parts.isEmpty) {
+          throw Exception('No parts found in Gemini response content.');
+        }
+        String jsonString = parts[0]['text'] as String;
         // Remove markdown code block delimiters if present
         if (jsonString.startsWith('```json')) {
-          jsonString = jsonString.substring(7); // Remove '```json'
+          jsonString = jsonString.substring(7);
         }
         if (jsonString.endsWith('```')) {
-          jsonString = jsonString.substring(0, jsonString.length - 3); // Remove '```'
+          jsonString = jsonString.substring(0, jsonString.length - 3);
         }
         
-        return _parseWordDataFromJson(jsonString);
+        return _parseWordDataFromJson(jsonString.trim());
       } else {
-        // Log the error with developer.log instead of printing.
-        developer.log('Gemini API Error: ${response.statusCode}', name: 'GeminiService');
-        developer.log('Response Body: ${response.body}', name: 'GeminiService');
+        developer.log(
+          'Gemini API Error: ${response.statusCode}\nResponse Body: ${response.body}',
+          name: 'GeminiService',
+          error: response.body,
+        );
         return null;
       }
-    } catch (e) {
-      // Handle network or other exceptions
-      developer.log('An error occurred: $e', name: 'GeminiService');
+    } catch (e, st) {
+      developer.log(
+        'An error occurred while calling Gemini API: $e',
+        name: 'GeminiService',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }
 
+  /// Parses the JSON string from the API into a [WordData] object.
+  ///
+  /// Includes robust error handling for missing keys and incorrect types.
   WordData _parseWordDataFromJson(String jsonString) {
-    final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-    
-    var contextsFromJson = jsonMap['persian_contexts'] as List;
-    List<PersianContext> persianContexts = contextsFromJson
-        .map((contextJson) => PersianContext(
-              meaning: contextJson['persian_translation'],
-              example: contextJson['persian_example'],
-              usageNotes: contextJson['usage_notes'],
-              collocations: List<String>.from(contextJson['collocations'] ?? []), // Handle null or empty
-              prepositionUsage: contextJson['preposition_usage'],
-            ))
-        .toList();
+    try {
+      final Map<String, dynamic> jsonMap = jsonDecode(jsonString.trim());
 
-    return WordData(
-      word: jsonMap['word'],
-      pronunciation: jsonMap['pronunciation'],
-      definition: jsonMap['definition'],
-      example: jsonMap['example'],
-      synonyms: List<String>.from(jsonMap['synonyms'] ?? []), // Handle null or empty
-      persianContexts: persianContexts,
-    );
+      final contextsFromJson = jsonMap['persian_contexts'] as List?;
+      final List<PersianContext> persianContexts = contextsFromJson
+              ?.map((contextJson) {
+                final map = contextJson as Map<String, dynamic>;
+                return PersianContext(
+                  meaning: map['persian_translation'] ?? 'N/A',
+                  example: map['persian_example'] ?? 'N/A',
+                  usageNotes: map['usage_notes'],
+                  collocations: List<String>.from(map['collocations'] ?? []),
+                  prepositionUsage: map['preposition_usage'],
+                );
+              })
+              .toList() ??
+          [];
+
+      return WordData(
+        word: jsonMap['word'] ?? 'N/A',
+        pronunciation: jsonMap['pronunciation'] ?? 'N/A',
+        definition: jsonMap['definition'] ?? 'N/A',
+        example: jsonMap['example'] ?? 'N/A',
+        synonyms: List<String>.from(jsonMap['synonyms'] ?? []),
+        persianContexts: persianContexts,
+      );
+    } catch (e, st) {
+      developer.log(
+        'Failed to parse JSON response: $e',
+        name: 'GeminiService',
+        error: jsonString, // Log the problematic JSON string
+        stackTrace: st,
+      );
+      // Re-throw the exception to be handled by the caller.
+      throw const FormatException('Invalid JSON format received from API.');
+    }
   }
 }

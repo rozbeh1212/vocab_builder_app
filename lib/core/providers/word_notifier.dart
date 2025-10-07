@@ -1,43 +1,114 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/word_data.dart';
 import '../models/word_srs.dart';
 import '../services/cache_service.dart';
+import '../services/default_word_service.dart'; // Import DefaultWordService
 import '../services/gemini_service.dart';
 import '../services/srs_service.dart';
-import '../models/word_data.dart';
 
-final wordNotifierProvider = AsyncNotifierProvider<WordNotifier, List<WordSRS>>(WordNotifier.new);
+/// Provides an asynchronous notifier for managing the list of [WordSRS] objects.
+///
+/// This provider handles loading words from the cache, adding new words by fetching
+/// details from an external service, and updating words after a review session.
+final wordNotifierProvider =
+    AsyncNotifierProvider<WordNotifier, List<WordSRS>>(WordNotifier.new);
 
 class WordNotifier extends AsyncNotifier<List<WordSRS>> {
   final CacheService _cacheService = CacheService.instance;
   final GeminiService _geminiService = GeminiService();
+  final DefaultWordService _defaultWordService = DefaultWordService(); // Instantiate DefaultWordService
 
+  /// The build method is called when the provider is first read.
+  /// It initializes the state by loading all SRS words from the local cache.
   @override
   Future<List<WordSRS>> build() async {
-    // load words from cache at startup
-    return await _cacheService.getAllWordSRS();
+    return _cacheService.getAllWordSRS();
   }
 
+  /// Helper method to add a list of words, handling duplicates and fetching details.
+  Future<void> _addWordsFromList(List<String> words) async {
+    state = const AsyncValue.loading(); // Set state to loading for the batch operation
+    try {
+      List<WordSRS> currentWords = state.value ?? [];
+      final List<WordSRS> wordsToAdd = [];
+
+      for (final word in words) {
+        final normalizedWord = word.trim().toLowerCase();
+        if (normalizedWord.isEmpty) continue;
+
+        // Check if word already exists
+        if (currentWords.any((w) => w.word.toLowerCase() == normalizedWord) ||
+            wordsToAdd.any((w) => w.word.toLowerCase() == normalizedWord)) {
+          continue; // Skip if already exists or already in the current batch to add
+        }
+
+        WordData? wordData = await getWordDetails(normalizedWord);
+        if (wordData != null) {
+          final newSrsData = WordSRS(
+            word: wordData.word,
+            dueDate: DateTime.now(),
+            repetition: 0,
+            interval: 0,
+            efactor: 2.5,
+          );
+          wordsToAdd.add(newSrsData);
+        }
+      }
+
+      if (wordsToAdd.isNotEmpty) {
+        await Future.wait(wordsToAdd.map((w) => _cacheService.saveWordSRS(w)));
+        state = AsyncValue.data([...currentWords, ...wordsToAdd]);
+      } else {
+        state = AsyncValue.data(currentWords); // Restore previous state if no new words were added
+      }
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  /// Loads IELTS words from the asset file and adds them to the vocabulary.
+  Future<void> loadIeltsWords() async {
+    final ieltsWords = await _defaultWordService.loadWordsFromAsset('assets/data/ielts_words.json');
+    await _addWordsFromList(ieltsWords);
+  }
+
+  /// Loads TOEFL words from the asset file and adds them to the vocabulary.
+  Future<void> loadToeflWords() async {
+    final toeflWords = await _defaultWordService.loadWordsFromAsset('assets/data/toefl_words.json');
+    await _addWordsFromList(toeflWords);
+  }
+
+  /// Adds a new word to the user's vocabulary list.
+  ///
+  /// It first checks if the word already exists. If not, it fetches word details
+  /// from the Gemini service, caches them, creates a new SRS entry, and updates the state.
   Future<void> addWord(String newWord) async {
+    final normalizedWord = newWord.trim().toLowerCase();
+    if (normalizedWord.isEmpty) return;
+
+    // For single word addition, we can reuse the existing logic
+    // but ensure it doesn't interfere with batch loading state.
+    final previousState = state;
     state = const AsyncValue.loading();
 
     try {
-      final existingSrs = await _cacheService.getWordSRS(newWord);
-      if (existingSrs != null) {
-        // word already exists; reload list and exit
-        state = AsyncValue.data(await _cacheService.getAllWordSRS());
+      final normalizedWord = newWord.trim().toLowerCase();
+      if (normalizedWord.isEmpty) {
+        state = previousState; // Restore state if input is empty
         return;
       }
 
-      WordData? wordData = await _cacheService.getWordDetails(newWord);
-      if (wordData == null) {
-        wordData = await _geminiService.getWordDetails(newWord);
+      final existingWords = previousState.value ?? [];
+      if (existingWords.any((w) => w.word.toLowerCase() == normalizedWord)) {
+        state = previousState; // Restore previous data state if word already exists
+        return;
       }
 
-      if (wordData != null) {
-        await _cacheService.saveWordDetails(newWord, wordData);
+      WordData? wordData = await getWordDetails(normalizedWord);
 
+      if (wordData != null) {
         final newSrsData = WordSRS(
-          word: newWord,
+          word: wordData.word,
           dueDate: DateTime.now(),
           repetition: 0,
           interval: 0,
@@ -45,49 +116,64 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
         );
 
         await _cacheService.saveWordSRS(newSrsData);
-        state = AsyncValue.data(await _cacheService.getAllWordSRS());
+        state = AsyncValue.data([...existingWords, newSrsData]);
       } else {
-        // nothing found; reload to ensure UI state is consistent
-        state = AsyncValue.data(await _cacheService.getAllWordSRS());
+        throw Exception('Details for "$newWord" could not be found.');
       }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
 
+  /// Updates a word's SRS data after a user review.
+  ///
+  /// [word]: The [WordSRS] object to be updated.
+  /// [quality]: An integer (0-5) representing the user's recall quality.
   Future<void> updateWordAfterReview(WordSRS word, int quality) async {
+    final currentWords = state.valueOrNull;
+    if (currentWords == null) return; // Cannot update if state is not loaded
+
     try {
+      // 1. Calculate the new SRS parameters using the SM2 algorithm.
       final updatedWord = SRSService.sm2(word, quality);
+
+      // 2. Save the updated data to the cache.
       await _cacheService.saveWordSRS(updatedWord);
 
-      final current = state.value ?? await _cacheService.getAllWordSRS();
-      final idx = current.indexWhere((w) => w.word == updatedWord.word);
-      if (idx != -1) {
-        current[idx] = updatedWord;
+      // 3. Update the state in memory for immediate UI feedback.
+      final index = currentWords.indexWhere((w) => w.word == updatedWord.word);
+      if (index != -1) {
+        final updatedList = List<WordSRS>.from(currentWords);
+        updatedList[index] = updatedWord;
+        state = AsyncValue.data(updatedList);
       }
-      state = AsyncValue.data(current);
     } catch (e, st) {
+      // If update fails, set the state to error.
       state = AsyncValue.error(e, st);
     }
   }
 
-  /// Retrieves word details from cache or fetches them if needed
+  /// Retrieves details for a given word.
+  ///
+  /// It first attempts to load from the local cache. If not found, it fetches
+  /// from the [GeminiService] and caches the result for future use.
   Future<WordData?> getWordDetails(String word) async {
     try {
-      // First try to get from cache
+      // First, try to get details from the cache.
       WordData? details = await _cacheService.getWordDetails(word);
       if (details != null) {
         return details;
       }
-      
-      // If not in cache, fetch from Gemini
+
+      // If not in cache, fetch from the external service.
       details = await _geminiService.getWordDetails(word);
       if (details != null) {
+        // If fetched successfully, save to cache for next time.
         await _cacheService.saveWordDetails(word, details);
       }
       return details;
     } catch (e) {
-      // For now, just return null on error. Consider more robust error handling.
+      // In case of error, return null. The caller should handle this.
       return null;
     }
   }

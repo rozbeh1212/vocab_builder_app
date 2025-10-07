@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word_srs.dart';
-import '../providers/word_provider.dart';
+import '../../core/providers/word_notifier.dart';
 import '../../utils/date_formatter.dart';
 
-class StatisticsDashboardScreen extends StatelessWidget {
+class StatisticsDashboardScreen extends ConsumerWidget {
   const StatisticsDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final wordState = ref.watch(wordNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Learning Progress'),
@@ -25,10 +27,9 @@ class StatisticsDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<WordProvider>(
-        builder: (context, provider, child) {
-          final words = provider.words;
-          final dueNow = provider.dueForReviewWords;
+      body: wordState.when(
+        data: (words) {
+          final dueNow = words.where((w) => w.dueDate.isBefore(DateTime.now())).toList();
           
           // Calculate statistics
           final totalWords = words.length;
@@ -47,6 +48,8 @@ class StatisticsDashboardScreen extends StatelessWidget {
             ],
           );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Error: ${e.toString()}')),
       ),
     );
   }

@@ -5,6 +5,11 @@ import 'dashboard_screen.dart';
 import 'statistics_dashboard_screen.dart';
 import 'settings_screen.dart';
 
+/// [MainScreen] is the root screen that hosts the main sections of the app,
+/// accessible via a bottom navigation bar.
+///
+/// It uses an [IndexedStack] to preserve the state of each screen as the user
+/// navigates between them.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -14,8 +19,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  final _pageController = PageController();
 
+  // A list of the widgets to display for each navigation item.
+  // Using const here is efficient as the screen instances themselves don't change.
   final List<Widget> _screens = const [
     HomeScreen(),
     DashboardScreen(),
@@ -23,33 +29,20 @@ class _MainScreenState extends State<MainScreen> {
     SettingsScreen(),
   ];
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _onPageChanged(int index) {
+  /// Handles tap events on the bottom navigation bar.
+  void _onNavigationTap(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
-  void _onNavigationTap(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const NeverScrollableScrollPhysics(), // Disable swipe
+      // IndexedStack is used to maintain the state of each screen when switching tabs.
+      // This is more efficient than PageView for this type of navigation.
+      body: IndexedStack(
+        index: _currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: MainNavigation(

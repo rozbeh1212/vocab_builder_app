@@ -20,7 +20,7 @@ class PersianContextAdapter extends TypeAdapter<PersianContext> {
       meaning: fields[0] as String,
       example: fields[1] as String,
       usageNotes: fields[2] as String?,
-      collocations: (fields[3] as List?)?.cast<String>(),
+      collocations: (fields[3] as List).cast<String>(),
       prepositionUsage: fields[4] as String?,
     );
   }
@@ -51,3 +51,28 @@ class PersianContextAdapter extends TypeAdapter<PersianContext> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+PersianContext _$PersianContextFromJson(Map<String, dynamic> json) =>
+    PersianContext(
+      meaning: json['meaning'] as String,
+      example: json['example'] as String,
+      usageNotes: json['usageNotes'] as String?,
+      collocations: (json['collocations'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      prepositionUsage: json['prepositionUsage'] as String?,
+    );
+
+Map<String, dynamic> _$PersianContextToJson(PersianContext instance) =>
+    <String, dynamic>{
+      'meaning': instance.meaning,
+      'example': instance.example,
+      'usageNotes': instance.usageNotes,
+      'collocations': instance.collocations,
+      'prepositionUsage': instance.prepositionUsage,
+    };

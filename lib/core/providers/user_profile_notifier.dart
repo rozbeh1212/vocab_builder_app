@@ -3,87 +3,99 @@ import 'package:uuid/uuid.dart';
 import '../models/user_profile.dart';
 import '../services/cache_service.dart';
 
-final userProfileNotifierProvider = AsyncNotifierProvider<UserProfileNotifier, UserProfile>(
-  () => UserProfileNotifier(),
+/// Provides an asynchronous notifier for managing the user's [UserProfile].
+///
+/// This provider handles loading the user profile from the cache, creating a new one
+/// if it doesn't exist, and updating user-specific data like experience points and streaks.
+final userProfileNotifierProvider =
+    AsyncNotifierProvider<UserProfileNotifier, UserProfile>(
+  UserProfileNotifier.new,
 );
 
 class UserProfileNotifier extends AsyncNotifier<UserProfile> {
   final CacheService _cacheService = CacheService.instance;
   final Uuid _uuid = const Uuid();
 
+  /// The build method initializes the user profile.
+  /// It loads the profile from the cache or creates a new one if none exists.
   @override
   Future<UserProfile> build() async {
-    return _loadUserProfile();
-  }
+    final cachedProfile = await _cacheService.getUserProfile();
 
-  Future<UserProfile> _loadUserProfile() async {
-    final box = await _cacheService.userProfileBox;
-    UserProfile? profile = box.get('current_user');
-
-    if (profile == null) {
-      profile = UserProfile(id: _uuid.v4());
-      await box.put('current_user', profile);
+    if (cachedProfile != null) {
+      return cachedProfile;
     }
-    return profile;
+
+    // If no profile exists, create a new one with a unique ID and save it.
+    final newProfile = UserProfile(id: _uuid.v4());
+    await _cacheService.saveUserProfile(newProfile);
+    return newProfile;
   }
 
+  /// Updates the user's experience points and handles leveling up.
   Future<void> updateExperience(int points) async {
+    // Ensure the current state is loaded and valid before updating.
+    final previousState = await future;
+    
+    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      UserProfile currentProfile = state.value!;
-      int newExperience = currentProfile.experiencePoints + points;
-      int newLevel = currentProfile.level;
+      int newExperience = previousState.experiencePoints + points;
+      int newLevel = previousState.level;
 
-      // Simple leveling system: 100 XP per level
+      // Simple leveling system: 100 XP required per level.
       while (newExperience >= newLevel * 100) {
         newExperience -= newLevel * 100;
         newLevel++;
-        // TODO: Trigger achievement for leveling up
+        // TODO: Implement a mechanism to grant achievements for leveling up.
       }
 
-      final updatedProfile = currentProfile.copyWith(
+      final updatedProfile = previousState.copyWith(
         experiencePoints: newExperience,
         level: newLevel,
       );
-      await _cacheService.userProfileBox.then((box) => box.put('current_user', updatedProfile));
+      
+      await _cacheService.saveUserProfile(updatedProfile);
       return updatedProfile;
     });
   }
 
+  /// Updates the user's daily login streak.
   Future<void> updateStreak() async {
+    final previousState = await future;
+
+    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      UserProfile currentProfile = state.value!;
-      DateTime now = DateTime.now();
-      DateTime today = DateTime(now.year, now.month, now.day);
+      final now = DateTime.now();
+      // Normalize to midnight to compare days accurately.
+      final today = DateTime(now.year, now.month, now.day); 
+      final lastLogin = previousState.lastLoginDate;
 
-      int newStreak = currentProfile.currentStreak;
-      DateTime? lastLogin = currentProfile.lastLoginDate;
+      int newStreak = previousState.currentStreak;
 
-      if (lastLogin == null || lastLogin.isBefore(today.subtract(const Duration(days: 1)))) {
-        // Streak broken or first login
+      if (lastLogin == null) {
+        // First login ever.
         newStreak = 1;
-      } else if (lastLogin.isAtSameMomentAs(today.subtract(const Duration(days: 1)))) {
-        // Continue streak
-        newStreak++;
-      }
-      // If lastLogin is today, streak doesn't change (already counted)
+      } else {
+        final lastLoginDate = DateTime(lastLogin.year, lastLogin.month, lastLogin.day);
+        final difference = today.difference(lastLoginDate).inDays;
 
-      final updatedProfile = currentProfile.copyWith(
+        if (difference == 1) {
+          // Consecutive day login, increment streak.
+          newStreak++;
+        } else if (difference > 1) {
+          // Streak is broken, reset to 1.
+          newStreak = 1;
+        }
+        // If difference is 0, it's the same day, so no change to streak.
+      }
+      
+      final updatedProfile = previousState.copyWith(
         currentStreak: newStreak,
         lastLoginDate: today,
       );
-      await _cacheService.userProfileBox.then((box) => box.put('current_user', updatedProfile));
+
+      await _cacheService.saveUserProfile(updatedProfile);
       return updatedProfile;
     });
   }
-
-  // Future<List<Achievement>> getAchievements() async {
-  //   final box = await _cacheService.achievementsBox;
-  //   return box.values.toList();
-  // }
-
-  // Future<void> addAchievement(Achievement achievement) async {
-  //   final box = await _cacheService.achievementsBox;
-  //   await box.put(achievement.id, achievement);
-  //   // Optionally update state to reflect new achievement
-  // }
 }

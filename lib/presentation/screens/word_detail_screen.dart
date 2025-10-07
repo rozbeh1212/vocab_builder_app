@@ -1,9 +1,177 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word_data.dart';
+import '../../core/models/word_srs.dart';
+import '../../core/providers/word_notifier.dart';
 import '../../utils/date_formatter.dart';
-import '../../core/providers/word_notifier.dart'; // Import the Riverpod notifier
+import '../widgets/common/app_loader.dart';
 import '../widgets/word/word_details_display.dart';
+
+class WordDetailScreen extends ConsumerStatefulWidget {
+  final String word;
+
+  const WordDetailScreen({super.key, required this.word});
+
+  @override
+  ConsumerState<WordDetailScreen> createState() => _WordDetailScreenState();
+}
+
+class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
+  late final Future<WordData?> _wordDetailsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch details once when the screen is initialized.
+    _wordDetailsFuture =
+        ref.read(wordNotifierProvider.notifier).getWordDetails(widget.word);
+  }
+
+  void _showReviewModal(BuildContext context, WordSRS wordSrs) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final notifier = ref.read(wordNotifierProvider.notifier);
+            return Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('How well did you remember this word?',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Review #${wordSrs.repetition + 1} · Next: ${wordSrs.dueDate.reviewDateDisplay}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _ReviewButton(
+                        color: Colors.red,
+                        label: 'Again',
+                        description: 'Needs practice',
+                        onPressed: () async {
+                          await notifier.updateWordAfterReview(wordSrs, 1);
+                          if (mounted) Navigator.of(context).pop();
+                        },
+                      ),
+                      _ReviewButton(
+                        color: Colors.amber,
+                        label: 'Good',
+                        description: 'Remembered',
+                        onPressed: () async {
+                          await notifier.updateWordAfterReview(wordSrs, 3);
+                          if (mounted) Navigator.of(context).pop();
+                        },
+                      ),
+                      _ReviewButton(
+                        color: Colors.green,
+                        label: 'Easy',
+                        description: 'Perfect recall',
+                        onPressed: () async {
+                          await notifier.updateWordAfterReview(wordSrs, 5);
+                          if (mounted) Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wordState = ref.watch(wordNotifierProvider);
+    final srsWords = wordState.value ?? [];
+    final wordSrs = srsWords.firstWhere(
+      (s) => s.word.toLowerCase() == widget.word.toLowerCase(),
+      orElse: () => WordSRS(word: '', dueDate: DateTime(0)), // Dummy value
+    );
+    final isInSrs = wordSrs.word.isNotEmpty;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.word),
+      ),
+      body: FutureBuilder<WordData?>(
+        future: _wordDetailsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const AppLoader(),
+                  const SizedBox(height: 16),
+                  Text('Loading details for "${widget.word}"...',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+            );
+          }
+
+          if (snapshot.hasError || snapshot.data == null) {
+            return const Center(
+              child: Text(
+                'Error loading details.\nPlease check your connection.',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+
+          final wordData = snapshot.data!;
+
+          return Column(
+            children: [
+              Expanded(child: WordDetailsDisplay(wordData: wordData)),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: isInSrs || wordState.isLoading
+                          ? null
+                          : () async {
+                              await ref
+                                  .read(wordNotifierProvider.notifier)
+                                  .addWord(widget.word);
+                            },
+                      icon: wordState.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.add),
+                      label: Text(isInSrs ? 'In Your List' : 'Add to List'),
+                    ),
+                    if (isInSrs)
+                      ElevatedButton(
+                        onPressed: () => _showReviewModal(context, wordSrs),
+                        child: const Text('Review'),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
 
 class _ReviewButton extends StatelessWidget {
   final Color color;
@@ -41,165 +209,6 @@ class _ReviewButton extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class WordDetailScreen extends ConsumerStatefulWidget {
-  final String word;
-
-  const WordDetailScreen({super.key, required this.word});
-
-  @override
-  ConsumerState<WordDetailScreen> createState() => _WordDetailScreenState();
-}
-
-class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Do not auto-add to SRS on open. Details will be fetched when the FutureBuilder runs.
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.word),
-      ),
-      body: Consumer(
-        builder: (context, ref, child) {
-          final wordNotifier = ref.read(wordNotifierProvider.notifier);
-          final srsWords = ref.watch(wordNotifierProvider).value ?? [];
-
-          return FutureBuilder<WordData?>(
-            future: wordNotifier.getWordDetails(widget.word),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text('Loading details for "${widget.word}"...', 
-                        style: Theme.of(context).textTheme.titleMedium
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (snapshot.hasError || snapshot.data == null) {
-                return const Center(
-                  child: Text(
-                    'Error loading details.\nPlease check your internet connection.',
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }
-
-              final inSrs = srsWords.any((s) => s.word.toLowerCase() == widget.word.toLowerCase());
-              final wordData = snapshot.data!;
-
-              return Column(
-                children: [
-                  Expanded(child: WordDetailsDisplay(wordData: wordData)),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: inSrs
-                              ? null
-                              : () async {
-                                  await wordNotifier.addWord(widget.word);
-                                  ref.read(wordNotifierProvider).whenOrNull(
-                                    error: (e, st) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-                                    },
-                                    data: (words) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added "${widget.word}" to SRS')));
-                                    },
-                                  );
-                                },
-                          icon: const Icon(Icons.add),
-                          label: Text(inSrs ? 'In SRS' : 'Add to SRS'),
-                        ),
-                        if (inSrs)
-                          ElevatedButton(
-                            onPressed: () {
-                              // Open review actions when in SRS
-                              showModalBottomSheet(
-                                context: context,
-                                builder: (_) {
-                                  final wordSrs = srsWords.firstWhere((s) => s.word.toLowerCase() == widget.word.toLowerCase());
-                                  return Container(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('How well did you remember this word?',
-                                            style: Theme.of(context).textTheme.titleMedium),
-                                        const SizedBox(height: 8),
-                                        // Show SRS stats
-                                        Text(
-                                          'Review #${wordSrs.repetition + 1} · Next review ${wordSrs.dueDate.reviewDateDisplay}',
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                color: Theme.of(context).colorScheme.primary,
-                                              ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        _ReviewButton(
-                                          color: Colors.red,
-                                          label: 'Again',
-                                          description: 'Needs more practice',
-                                          onPressed: () async {
-                                            await wordNotifier.updateWordAfterReview(wordSrs, 1);
-                                            if (mounted) Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        _ReviewButton(
-                                          color: Colors.amber,
-                                          label: 'Good',
-                                          description: 'Remembered with effort',
-                                          onPressed: () async {
-                                            await wordNotifier.updateWordAfterReview(wordSrs, 3);
-                                            if (mounted) Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        _ReviewButton(
-                                          color: Colors.green,
-                                          label: 'Easy',
-                                          description: 'Perfect recall',
-                                          onPressed: () async {
-                                            await wordNotifier.updateWordAfterReview(wordSrs, 5);
-                                            if (mounted) Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                            },
-                            child: const Text('Review'),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
       ),
     );
   }

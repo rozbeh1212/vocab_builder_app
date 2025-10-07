@@ -1,14 +1,29 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Flutter (Chrome)",
+            "name": "Vocab Builder (Debug)",
             "request": "launch",
             "type": "dart",
-            "args": ["-d", "chrome"]
+            "flutterMode": "debug"
+        },
+        {
+            "name": "Vocab Builder (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "Vocab Builder (Release)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "Vocab Builder (Chrome)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome"
         }
     ]
 }

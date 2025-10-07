@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word.dart';
-import '../../core/services/word_service.dart';
+import '../../core/models/word_srs.dart';
 import '../../core/providers/word_notifier.dart';
-import '../../utils/date_formatter.dart'; // Ensure this import is present
-import '../../core/models/word_srs.dart'; // Ensure WordSRS is imported
-import 'word_detail_screen.dart';
+import '../../core/services/word_service.dart';
+import '../../utils/app_router.dart';
+import '../../utils/date_formatter.dart';
 import '../widgets/common/app_loader.dart';
 
 class WordListScreen extends ConsumerStatefulWidget {
@@ -17,6 +17,7 @@ class WordListScreen extends ConsumerStatefulWidget {
 }
 
 class _WordListScreenState extends ConsumerState<WordListScreen> {
+  // Future to load the master word list from assets (e.g., TOEFL, IELTS)
   late Future<List<Word>> _wordsFuture;
   final WordService _wordService = WordService();
   final TextEditingController _searchController = TextEditingController();
@@ -25,25 +26,31 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
   @override
   void initState() {
     super.initState();
+    _loadWordsFromAssets();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _loadWordsFromAssets() {
     _wordsFuture = _wordService.loadWords(widget.category);
-    // Removed provider load to avoid overriding asset list
   }
 
   void _onSearchChanged() {
-    setState(() {
-      _searchQuery = _searchController.text.trim().toLowerCase();
-    });
+    if (_searchQuery != _searchController.text.trim()) {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    }
   }
 
   Future<void> _refresh() async {
     setState(() {
-      _wordsFuture = _wordService.loadWords(widget.category);
+      _loadWordsFromAssets();
     });
-    await _wordsFuture;
+    // Also refresh the SRS words from the cache
+    await ref.refresh(wordNotifierProvider.future);
   }
 
-  Widget _buildSrsStatus(BuildContext context, List<WordSRS> srsWords, String word) {
-    final srsWord = srsWords.firstWhere((w) => w.word.toLowerCase() == word.toLowerCase());
+  Widget _buildSrsStatus(BuildContext context, WordSRS srsWord) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -54,7 +61,7 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
         ),
         const SizedBox(width: 4),
         Text(
-          srsWord.dueDate.reviewDateDisplay, // Removed '!' as dueDate is non-nullable
+          srsWord.dueDate.reviewDateDisplay,
           style: TextStyle(
             color: Theme.of(context).colorScheme.primary,
             fontSize: 12,
@@ -67,12 +74,14 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.category} Words'),
@@ -82,22 +91,20 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
               controller: _searchController,
-              onChanged: (_) => _onSearchChanged(),
               decoration: InputDecoration(
-                hintText: 'Search words',
+                hintText: 'Search words...',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
+                suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          _onSearchChanged();
                         },
                       )
                     : null,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 filled: true,
-                fillColor: Theme.of(context).cardColor,
+                fillColor: theme.cardColor,
               ),
             ),
           ),
@@ -105,13 +112,13 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
       ),
       body: Consumer(
         builder: (context, ref, _) {
-          final wordState = ref.watch(wordNotifierProvider);
-          final srsWords = wordState.value ?? [];
+          // Watch the user's SRS word list from the provider
+          final srsWordState = ref.watch(wordNotifierProvider);
+          final srsWords = srsWordState.value ?? [];
 
           return FutureBuilder<List<Word>>(
             future: _wordsFuture,
             builder: (context, snapshot) {
-              // Debug: show snapshot state when something goes wrong
               if (snapshot.hasError) {
                 return Center(
                   child: Padding(
@@ -121,7 +128,7 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
                       children: [
                         const Icon(Icons.error_outline, size: 48, color: Colors.red),
                         const SizedBox(height: 12),
-                        Text('Failed to load words from assets', style: Theme.of(context).textTheme.titleMedium),
+                        Text('Failed to load words from assets', style: theme.textTheme.titleMedium),
                         const SizedBox(height: 8),
                         Text('${snapshot.error}', textAlign: TextAlign.center),
                         const SizedBox(height: 12),
@@ -135,84 +142,72 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
                 );
               }
 
-              if (snapshot.connectionState == ConnectionState.waiting || 
-                  wordState.isLoading) {
+              if (snapshot.connectionState == ConnectionState.waiting || srsWordState.isLoading) {
                 return const Center(child: AppLoader());
               }
 
               final allWords = snapshot.data ?? [];
-              final words = _searchQuery.isEmpty
+              final filteredWords = _searchQuery.isEmpty
                   ? allWords
                   : allWords.where((w) => w.word.toLowerCase().contains(_searchQuery)).toList();
 
-              if (words.isEmpty) {
+              if (filteredWords.isEmpty) {
                 return RefreshIndicator(
                   onRefresh: _refresh,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
                       const SizedBox(height: 120),
-                      Center(child: Text('No words found', style: Theme.of(context).textTheme.titleMedium)),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 48.0),
-                        child: ElevatedButton(
-                          onPressed: _refresh,
-                          child: const Text('Reload'),
-                        ),
-                      ),
+                      Center(child: Text('No words found.', style: theme.textTheme.titleMedium)),
                     ],
                   ),
                 );
               }
 
+              // Create a lookup map for faster SRS status checks
+              final srsWordsMap = {for (var srs in srsWords) srs.word.toLowerCase(): srs};
+
               return RefreshIndicator(
                 onRefresh: _refresh,
                 child: ListView.separated(
-                  itemCount: words.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: filteredWords.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16),
                   itemBuilder: (context, index) {
-                    final word = words[index];
-                    final inSrs = srsWords.any((s) => s.word.toLowerCase() == word.word.toLowerCase());
+                    final word = filteredWords[index];
+                    final srsData = srsWordsMap[word.word.toLowerCase()];
+                    final isInSrs = srsData != null;
+
                     return ListTile(
                       leading: CircleAvatar(child: Text(word.word[0].toUpperCase())),
                       title: Text(word.word, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (word.meaning != null) Text(word.meaning!),
-                          if (inSrs) ...[const SizedBox(height: 4), _buildSrsStatus(context, srsWords, word.word)],
-                        ],
-                      ),
+                      subtitle: isInSrs ? _buildSrsStatus(context, srsData) : null,
                       trailing: IconButton(
-                        icon: inSrs ? const Icon(Icons.check_circle, color: Colors.green) : const Icon(Icons.add_circle_outline),
-                        tooltip: inSrs ? 'Already in SRS' : 'Add to SRS',
-                        onPressed: inSrs
-                            ? null
+                        icon: isInSrs
+                            ? const Icon(Icons.check_circle, color: Colors.green)
+                            : const Icon(Icons.add_circle_outline),
+                        tooltip: isInSrs ? 'Added to your list' : 'Add to your list',
+                        onPressed: isInSrs
+                            ? null // Disable button if word is already in SRS
                             : () async {
-                                final wordNotifier = ref.read(wordNotifierProvider.notifier);
-                                await wordNotifier.addWord(word.word);
-                                // Check for error from the notifier's state
-                                ref.read(wordNotifierProvider).whenOrNull(
-                                  error: (e, st) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error: ${e.toString()}')),
-                                    );
-                                  },
-                                  data: (words) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Added "${word.word}" to SRS')),
-                                    );
-                                  },
-                                );
+                                final notifier = ref.read(wordNotifierProvider.notifier);
+                                await notifier.addWord(word.word);
+                                // The UI will update automatically via the provider watcher,
+                                // but we can show a confirmation snackbar.
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Added "${word.word}" to your list.'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
                               },
                       ),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WordDetailScreen(word: word.word),
-                          ),
+                        Navigator.of(context).pushNamed(
+                          AppRouter.wordDetailRoute,
+                          arguments: word.word,
                         );
                       },
                     );

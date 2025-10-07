@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// [AnimatedListItem] is a stateful widget that animates its child
+/// with a staggered fade and slide effect.
+///
+/// It's designed to be used within a list to create an engaging and
+/// visually appealing entrance animation for each item.
 class AnimatedListItem extends StatefulWidget {
   final Widget child;
   final int index;
@@ -26,7 +31,8 @@ class _AnimatedListItemState extends State<AnimatedListItem>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      // A slightly shorter duration can feel more responsive.
+      duration: const Duration(milliseconds: 350),
       vsync: this,
     );
 
@@ -35,19 +41,22 @@ class _AnimatedListItemState extends State<AnimatedListItem>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
+      curve: Curves.easeOut,
     ));
 
+    // The slide animation starts from the side (left or right) and moves to the center.
     _slideAnimation = Tween<Offset>(
       begin: Offset(widget.isEven ? 0.5 : -0.5, 0.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
+      curve: Curves.easeOut,
     ));
 
-    // Delay each item's animation based on its index
-    Future.delayed(Duration(milliseconds: widget.index * 50), () {
+    // A staggered delay is applied to each item based on its index in the list.
+    // This creates a cascading or "waterfall" effect.
+    Future.delayed(Duration(milliseconds: widget.index * 60), () {
+      // Ensure the widget is still in the tree before starting the animation.
       if (mounted) {
         _controller.forward();
       }
@@ -62,6 +71,7 @@ class _AnimatedListItemState extends State<AnimatedListItem>
 
   @override
   Widget build(BuildContext context) {
+    // The animations are applied using FadeTransition and SlideTransition widgets.
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(

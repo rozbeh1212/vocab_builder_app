@@ -1,43 +1,39 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'word_srs.g.dart';
 
-/// [WordSRS] represents a word's spaced repetition learning data.
+/// [WordSRS] represents the spaced repetition learning data for a single word.
 ///
-/// This model tracks:
-/// * The word being learned
-/// * Next review date
-/// * Learning progress metrics
-/// * Spaced repetition parameters
-///
-/// The model is used by the SRS system to:
-/// * Schedule reviews
-/// * Track learning progress
-/// * Adjust intervals based on performance
-/// * Maintain learning history
-///
-/// This class is annotated for Hive persistence and includes:
-/// * Automatic type adaptation
-/// * Efficient serialization
-/// * Type-safe storage
+/// This model is immutable and designed for persistence with Hive. It tracks all
+/// essential parameters for the SM-2 algorithm, including the next review date,
+/// the number of repetitions, the interval between reviews, and the ease factor.
+@immutable
 @HiveType(typeId: 0)
+@JsonSerializable()
 class WordSRS {
+  /// The word being learned.
   @HiveField(0)
-  String word;
+  final String word;
 
+  /// The next date the word is scheduled for review.
   @HiveField(1)
-  DateTime dueDate;
+  final DateTime dueDate;
 
+  /// The number of times the word has been successfully recalled in a row.
   @HiveField(2)
-  int repetition;
+  final int repetition;
 
+  /// The current interval in days until the next review.
   @HiveField(3)
-  int interval; // in days
+  final int interval;
 
+  /// The ease factor (E-Factor), which determines how quickly the interval grows.
   @HiveField(4)
-  double efactor;
+  final double efactor;
 
-  WordSRS({
+  const WordSRS({
     required this.word,
     required this.dueDate,
     this.repetition = 0,
@@ -45,7 +41,11 @@ class WordSRS {
     this.efactor = 2.5,
   });
 
-  /// Create a copy of this WordSRS optionally overriding fields.
+  factory WordSRS.fromJson(Map<String, dynamic> json) => _$WordSRSFromJson(json);
+  Map<String, dynamic> toJson() => _$WordSRSToJson(this);
+
+  /// Creates a copy of this [WordSRS] instance with the given fields replaced
+  /// with new values.
   WordSRS copyWith({
     String? word,
     DateTime? dueDate,
@@ -60,5 +60,31 @@ class WordSRS {
       interval: interval ?? this.interval,
       efactor: efactor ?? this.efactor,
     );
+  }
+
+  @override
+  String toString() {
+    return 'WordSRS(word: $word, dueDate: $dueDate, repetition: $repetition, interval: $interval, efactor: $efactor)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is WordSRS &&
+        other.word == word &&
+        other.dueDate == dueDate &&
+        other.repetition == repetition &&
+        other.interval == interval &&
+        other.efactor == efactor;
+  }
+
+  @override
+  int get hashCode {
+    return word.hashCode ^
+        dueDate.hashCode ^
+        repetition.hashCode ^
+        interval.hashCode ^
+        efactor.hashCode;
   }
 }
