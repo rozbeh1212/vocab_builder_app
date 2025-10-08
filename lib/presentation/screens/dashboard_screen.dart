@@ -55,13 +55,6 @@ class DashboardScreen extends ConsumerWidget {
               Navigator.of(context).pushNamed(AppRouter.addWordRoute);
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.list),
-            tooltip: 'View All Words',
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppRouter.wordListRoute);
-            },
-          ),
         ],
       ),
       body: wordState.when(
@@ -73,12 +66,21 @@ class DashboardScreen extends ConsumerWidget {
             );
           }
 
+          // Filter the list to display only words due for review on the dashboard.
+          final dueForReviewWords =
+              wordList.where((word) => word.dueDate.isBefore(DateTime.now())).toList();
+
+          if (dueForReviewWords.isEmpty) {
+            return const Center(
+              child: Text('No words due for review. Check back later!'),
+            );
+          }
+
           // Display the list of words using a ListView.builder.
           return ListView.builder(
-            itemCount: wordList.length,
+            itemCount: dueForReviewWords.length,
             itemBuilder: (context, index) {
-              final word = wordList[index];
-              final isDue = word.dueDate.isBefore(DateTime.now());
+              final word = dueForReviewWords[index];
               final formattedDate =
                   DateFormat.yMMMd('fa_IR').format(word.dueDate.toLocal());
 
@@ -90,7 +92,7 @@ class DashboardScreen extends ConsumerWidget {
                   subtitle: Text('مرور بعدی: $formattedDate'),
                   trailing: Icon(
                     Icons.circle,
-                    color: isDue ? Colors.blueAccent : Colors.grey.shade700,
+                    color: Colors.blueAccent, // Always blue since these are due
                     size: 12,
                   ),
                   onTap: () {
@@ -106,12 +108,6 @@ class DashboardScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('Error: ${e.toString()}')),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).pushNamed(AppRouter.addWordRoute);
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }

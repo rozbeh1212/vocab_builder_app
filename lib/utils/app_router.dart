@@ -65,7 +65,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const DashboardScreen());
 
       case wordListRoute: // Add route for WordListScreen
-        return MaterialPageRoute(builder: (_) => const WordListScreen(category: 'default_words.json'));
+        return MaterialPageRoute(builder: (_) => const WordListScreen(category: 'default'));
 
       default:
         return _errorRoute('Unknown route: ${settings.name}');

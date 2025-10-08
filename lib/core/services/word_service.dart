@@ -20,7 +20,7 @@ class WordService {
   /// it logs the error and returns an empty list to prevent crashes.
   Future<List<Word>> loadWords(String category) async {
     // First try to load category-specific words
-    final String categoryAssetPath = 'assets/data/${category.toLowerCase()}_words.json';
+    final String categoryAssetPath = 'data/${category.toLowerCase()}_words.json';
 
     try {
       // Load the category-specific JSON file as a string from the root bundle.
@@ -50,7 +50,7 @@ class WordService {
 
   /// Loads the default word list from predefined-words.json
   Future<List<Word>> _loadDefaultWords() async {
-    const String defaultAssetPath = 'src/assets/predefined-words.json';
+    const String defaultAssetPath = 'data/default_words.json';
 
     try {
       // Load the default JSON file as a string from the root bundle.
@@ -75,5 +75,36 @@ class WordService {
       // Return an empty list to ensure the app can continue running.
       return [];
     }
+  }
+
+  /// Loads all words from all known JSON asset files.
+  ///
+  /// This method attempts to load words from `default_words.json`, `ielts_words.json`,
+  /// and `toefl_words.json`. It combines all successfully loaded words into a single list.
+  /// Duplicate words are removed to ensure a unique collection.
+  Future<List<Word>> loadAllWords() async {
+    final List<String> assetPaths = [
+      'data/default_words.json',
+      'data/ielts_words.json',
+      'data/toefl_words.json',
+    ];
+
+    final Set<Word> allWords = {};
+
+    for (final path in assetPaths) {
+      try {
+        final String jsonString = await rootBundle.loadString(path);
+        final List<dynamic> data = json.decode(jsonString);
+        allWords.addAll(data.map((word) => Word(word: word.toString())));
+        developer.log('Successfully loaded words from asset: $path');
+      } catch (e, st) {
+        developer.log(
+          'Failed to load or parse words from asset: $path',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+    return allWords.toList();
   }
 }

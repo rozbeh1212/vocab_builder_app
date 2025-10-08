@@ -69,7 +69,7 @@ flutter:
 
   # Declare assets so Flutter can find them
   assets:
-    - assets/
+    - assets/data/
 
 # Configuration for flutter_launcher_icons
 flutter_launcher_icons:
