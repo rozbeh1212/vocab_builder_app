@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_notifier.dart';
 import '../../core/providers/word_notifier.dart'; // Import WordNotifier
-import '../../utils/app_router.dart'; // Import AppRouter
+// Import AppRouter
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

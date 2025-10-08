@@ -90,7 +90,7 @@ class DashboardScreen extends ConsumerWidget {
                   title: Text(word.word,
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('مرور بعدی: $formattedDate'),
-                  trailing: Icon(
+                  trailing: const Icon(
                     Icons.circle,
                     color: Colors.blueAccent, // Always blue since these are due
                     size: 12,

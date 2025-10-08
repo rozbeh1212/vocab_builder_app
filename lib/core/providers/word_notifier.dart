@@ -1,3 +1,4 @@
+import 'dart:developer' as developer; // Import for logging
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/word_data.dart';
 import '../models/word_srs.dart';
@@ -46,6 +47,19 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
         if (wordData != null) {
           final newSrsData = WordSRS(
             word: wordData.word,
+            dueDate: DateTime.now(),
+            repetition: 0,
+            interval: 0,
+            efactor: 2.5,
+          );
+          wordsToAdd.add(newSrsData);
+        } else {
+          // If word details cannot be fetched from GeminiService (e.g., API error, malformed response),
+          // add the word with minimal SRS data. This ensures the word still appears in the UI
+          // even if rich details are unavailable, preventing the display from breaking.
+          developer.log('Failed to fetch details for word: $normalizedWord. Adding with minimal data.', name: 'WordNotifier');
+          final newSrsData = WordSRS(
+            word: normalizedWord,
             dueDate: DateTime.now(),
             repetition: 0,
             interval: 0,
@@ -118,7 +132,19 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
         await _cacheService.saveWordSRS(newSrsData);
         state = AsyncValue.data([...existingWords, newSrsData]);
       } else {
-        throw Exception('Details for "$newWord" could not be found.');
+        // If word details cannot be fetched for a single word addition,
+        // add the word with minimal SRS data. This ensures the word still appears
+        // in the UI even if rich details are unavailable.
+        developer.log('Failed to fetch details for word: $normalizedWord. Adding with minimal data.', name: 'WordNotifier');
+        final newSrsData = WordSRS(
+          word: normalizedWord,
+          dueDate: DateTime.now(),
+          repetition: 0,
+          interval: 0,
+          efactor: 2.5,
+        );
+        await _cacheService.saveWordSRS(newSrsData);
+        state = AsyncValue.data([...existingWords, newSrsData]);
       }
     } catch (e, st) {
       state = AsyncValue.error(e, st);

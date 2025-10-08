@@ -125,7 +125,9 @@ class GeminiService {
 
   /// Parses the JSON string from the API into a [WordData] object.
   ///
-  /// Includes robust error handling for missing keys and incorrect types.
+  /// This method includes robust error handling for missing keys and incorrect types
+  /// by providing default empty values. It also logs the problematic JSON string
+  /// in case of a parsing error to aid in debugging API response format issues.
   WordData _parseWordDataFromJson(String jsonString) {
     try {
       final Map<String, dynamic> jsonMap = jsonDecode(jsonString.trim());
@@ -135,8 +137,8 @@ class GeminiService {
               ?.map((contextJson) {
                 final map = contextJson as Map<String, dynamic>;
                 return PersianContext(
-                  meaning: map['persian_translation'] ?? 'N/A',
-                  example: map['persian_example'] ?? 'N/A',
+                  meaning: map['persian_translation'] ?? '',
+                  example: map['persian_example'] ?? '',
                   usageNotes: map['usage_notes'],
                   collocations: List<String>.from(map['collocations'] ?? []),
                   prepositionUsage: map['preposition_usage'],
@@ -146,22 +148,25 @@ class GeminiService {
           [];
 
       return WordData(
-        word: jsonMap['word'] ?? 'N/A',
-        pronunciation: jsonMap['pronunciation'] ?? 'N/A',
-        definition: jsonMap['definition'] ?? 'N/A',
-        example: jsonMap['example'] ?? 'N/A',
+        word: jsonMap['word'] ?? '',
+        pronunciation: jsonMap['pronunciation'] ?? '',
+        definition: jsonMap['definition'] ?? '',
+        example: jsonMap['example'] ?? '',
         synonyms: List<String>.from(jsonMap['synonyms'] ?? []),
         persianContexts: persianContexts,
+        // Explicitly map 'definition' from the API response to 'meaning' in WordData
+        // if a separate 'meaning' field is not provided by the API.
+        meaning: jsonMap['definition'] ?? '',
       );
     } catch (e, st) {
       developer.log(
-        'Failed to parse JSON response: $e',
+        'Failed to parse JSON response: $e. Problematic JSON: $jsonString',
         name: 'GeminiService',
-        error: jsonString, // Log the problematic JSON string
+        error: e,
         stackTrace: st,
       );
-      // Re-throw the exception to be handled by the caller.
-      throw const FormatException('Invalid JSON format received from API.');
+      // Re-throw the exception to be handled by the caller, providing context.
+      throw FormatException('Invalid JSON format received from API: $e');
     }
   }
 }
