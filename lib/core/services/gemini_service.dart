@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import '../constants/api_key.dart';
 import '../models/word_data.dart';
 import '../models/persian_context.dart';
+import '../models/word_form.dart'; // Import WordForm
+import '../models/phrasal_verb.dart'; // Import PhrasalVerb
 
 /// [GeminiService] interacts with Google's Gemini AI to provide word details.
 ///
@@ -42,7 +44,33 @@ class GeminiService {
         "definition": "...",
         "example": "...",
         "synonyms": ["...", "..."],
-        "phrasal_verbs": ["...", "..."],
+        "phrasal_verbs": [
+          {
+            "verb": "give up",
+            "meaning": "To stop trying to do something.",
+            "example": "He decided to give up smoking."
+          },
+          {
+            "verb": "give in",
+            "meaning": "To finally agree to what someone wants.",
+            "example": "She wouldn't give in to his demands."
+          }
+        ],
+        "word_forms": [
+          {
+            "form_type": "Noun",
+            "word": "creation",
+            "meaning": "The action or process of bringing something into existence.",
+            "example": "The creation of a new constitution was a long process."
+          },
+          {
+            "form_type": "Adjective",
+            "word": "creative",
+            "meaning": "Relating to or involving the imagination or original ideas.",
+            "example": "She has a very creative approach to problem-solving."
+          }
+        ],
+        "mnemonic": "A short, clever sentence to help remember the word.",
         "persian_contexts": [
           {
             "persian_translation": "...",
@@ -148,14 +176,34 @@ class GeminiService {
               .toList() ??
           [];
 
+      final wordFormsFromJson = jsonMap['word_forms'] as List?;
+      final List<WordForm> wordForms = wordFormsFromJson
+              ?.map((formJson) {
+                final map = formJson as Map<String, dynamic>;
+                return WordForm.fromJson(map);
+              })
+              .toList() ??
+          [];
+
+      final phrasalVerbsFromJson = jsonMap['phrasal_verbs'] as List?;
+      final List<PhrasalVerb> phrasalVerbs = phrasalVerbsFromJson
+              ?.map((pvJson) {
+                final map = pvJson as Map<String, dynamic>;
+                return PhrasalVerb.fromJson(map);
+              })
+              .toList() ??
+          [];
+
       return WordData(
         word: jsonMap['word'] ?? '',
         pronunciation: jsonMap['pronunciation'] ?? '',
         definition: jsonMap['definition'] ?? '',
         example: jsonMap['example'] ?? '',
         synonyms: List<String>.from(jsonMap['synonyms'] ?? []),
-        phrasalVerbs: List<String>.from(jsonMap['phrasal_verbs'] ?? []),
+        phrasalVerbs: phrasalVerbs,
+        wordForms: wordForms,
         persianContexts: persianContexts,
+        mnemonic: jsonMap['mnemonic'],
         // Explicitly map 'definition' from the API response to 'meaning' in WordData
         // if a separate 'meaning' field is not provided by the API.
         meaning: jsonMap['definition'] ?? '',

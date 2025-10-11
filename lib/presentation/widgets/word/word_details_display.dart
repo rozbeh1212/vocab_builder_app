@@ -28,7 +28,60 @@ class WordDetailsDisplay extends StatelessWidget {
           ],
           if (wordData.phrasalVerbs?.isNotEmpty ?? false) ...[
             _buildSectionTitle(context, 'Phrasal Verbs'),
-            Text(wordData.phrasalVerbs?.join(', ') ?? '', style: theme.textTheme.bodyMedium),
+            ...wordData.phrasalVerbs!.map((pv) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pv.verb,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Meaning: ${pv.meaning}',
+                    style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                  Text(
+                    'Example: ${pv.example}',
+                    style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+          ],
+          if (wordData.wordForms?.isNotEmpty ?? false) ...[
+            _buildSectionTitle(context, 'Word Forms'),
+            ...wordData.wordForms!.map((form) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: theme.textTheme.bodyLarge,
+                      children: [
+                        TextSpan(
+                          text: '${form.formType}: ',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: form.word),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Meaning: ${form.meaning}',
+                    style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                  Text(
+                    'Example: ${form.example}',
+                    style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            )),
             const SizedBox(height: 16),
           ],
           _buildSectionTitle(context, 'Example'),
@@ -39,6 +92,24 @@ class WordDetailsDisplay extends StatelessWidget {
               color: theme.colorScheme.onSurface.withOpacity(0.8),
             ),
           ),
+          if (wordData.mnemonic?.isNotEmpty ?? false) ...[
+            const Divider(height: 48),
+            _buildSectionTitle(context, 'Memory Aid'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lightbulb_outline, color: theme.colorScheme.secondary, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    wordData.mnemonic!,
+                    style: theme.textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           const Divider(height: 48),
           _buildSectionTitle(context, 'Persian Contexts'),
           ...?wordData.persianContexts

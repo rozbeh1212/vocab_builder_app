@@ -46,6 +46,7 @@ dependencies:
   # Spaced Repetition Algorithm
   fsrs: ^2.0.1
   json_annotation: ^4.9.0
+  equatable: ^2.0.5
 
 dev_dependencies:
   flutter_test:
@@ -83,10 +84,4 @@ flutter_native_splash:
   color: "#FFFFFF"
   image: assets/icon.png
   color_dark: "#121212"
-  image_dark: assets/icon.png # Optional: if you have a different icon for dark mode
-
-  android_12:
-    color: "#FFFFFF"
-    image: assets/icon.png
-    color_dark: "#121212"
-    image_dark: assets/icon.png # Optional
+  image_dark: "assets/icon.png"

@@ -27,13 +27,16 @@ class WordDataAdapter extends TypeAdapter<WordData> {
       audioUrl: fields[7] as String?,
       definition: fields[8] as String?,
       persianContexts: (fields[9] as List?)?.cast<PersianContext>(),
+      phrasalVerbs: (fields[10] as List?)?.cast<PhrasalVerb>(),
+      wordForms: (fields[11] as List?)?.cast<WordForm>(),
+      mnemonic: fields[12] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, WordData obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.word)
       ..writeByte(1)
@@ -53,7 +56,13 @@ class WordDataAdapter extends TypeAdapter<WordData> {
       ..writeByte(8)
       ..write(obj.definition)
       ..writeByte(9)
-      ..write(obj.persianContexts);
+      ..write(obj.persianContexts)
+      ..writeByte(10)
+      ..write(obj.phrasalVerbs)
+      ..writeByte(11)
+      ..write(obj.wordForms)
+      ..writeByte(12)
+      ..write(obj.mnemonic);
   }
 
   @override
@@ -88,6 +97,13 @@ WordData _$WordDataFromJson(Map<String, dynamic> json) => WordData(
       persianContexts: (json['persianContexts'] as List<dynamic>?)
           ?.map((e) => PersianContext.fromJson(e as Map<String, dynamic>))
           .toList(),
+      phrasalVerbs: (json['phrasalVerbs'] as List<dynamic>?)
+          ?.map((e) => PhrasalVerb.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      wordForms: (json['wordForms'] as List<dynamic>?)
+          ?.map((e) => WordForm.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      mnemonic: json['mnemonic'] as String?,
     );
 
 Map<String, dynamic> _$WordDataToJson(WordData instance) => <String, dynamic>{
@@ -101,4 +117,7 @@ Map<String, dynamic> _$WordDataToJson(WordData instance) => <String, dynamic>{
       'audioUrl': instance.audioUrl,
       'definition': instance.definition,
       'persianContexts': instance.persianContexts,
+      'phrasalVerbs': instance.phrasalVerbs,
+      'wordForms': instance.wordForms,
+      'mnemonic': instance.mnemonic,
     };

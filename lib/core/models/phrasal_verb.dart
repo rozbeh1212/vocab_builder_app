@@ -1,20 +1,21 @@
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:equatable/equatable.dart';
 
 part 'phrasal_verb.g.dart';
 
-@HiveType(typeId: 4) // Unique typeId for PhrasalVerb
+@HiveType(typeId: 4) // Using a new, unused typeId
 @JsonSerializable()
-class PhrasalVerb extends HiveObject {
+class PhrasalVerb with EquatableMixin {
   @HiveField(0)
-  final String phrasalVerb;
+  final String verb;
   @HiveField(1)
   final String meaning;
   @HiveField(2)
   final String example;
 
-  PhrasalVerb({
-    required this.phrasalVerb,
+  const PhrasalVerb({
+    required this.verb,
     required this.meaning,
     required this.example,
   });
@@ -23,24 +24,5 @@ class PhrasalVerb extends HiveObject {
   Map<String, dynamic> toJson() => _$PhrasalVerbToJson(this);
 
   @override
-  String toString() {
-    return 'PhrasalVerb(phrasalVerb: $phrasalVerb, meaning: $meaning, example: $example)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is PhrasalVerb &&
-        other.phrasalVerb == phrasalVerb &&
-        other.meaning == meaning &&
-        other.example == example;
-  }
-
-  @override
-  int get hashCode {
-    return phrasalVerb.hashCode ^
-        meaning.hashCode ^
-        example.hashCode;
-  }
+  List<Object> get props => [verb, meaning, example];
 }
