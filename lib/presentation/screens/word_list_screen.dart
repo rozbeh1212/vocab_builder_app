@@ -47,7 +47,7 @@ class _WordListScreenState extends ConsumerState<WordListScreen> {
       _loadWordsFromAssets();
     });
     // Also refresh the SRS words from the cache
-    ref.refresh(wordNotifierProvider);
+    ref.invalidate(wordNotifierProvider);
   }
 
   Widget _buildSrsStatus(BuildContext context, WordSRS srsWord) {

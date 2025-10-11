@@ -26,6 +26,11 @@ class WordDetailsDisplay extends StatelessWidget {
             Text(wordData.synonyms?.join(', ') ?? '', style: theme.textTheme.bodyMedium),
             const SizedBox(height: 16),
           ],
+          if (wordData.phrasalVerbs?.isNotEmpty ?? false) ...[
+            _buildSectionTitle(context, 'Phrasal Verbs'),
+            Text(wordData.phrasalVerbs?.join(', ') ?? '', style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 16),
+          ],
           _buildSectionTitle(context, 'Example'),
           Text(
             wordData.example ?? '',

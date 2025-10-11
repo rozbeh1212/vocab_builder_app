@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flip_card/flip_card.dart';
 
 import '../../core/models/word_srs.dart';
 import '../../core/models/word_data.dart';
 import '../../core/providers/word_notifier.dart';
 import '../widgets/common/app_loader.dart';
-import '../widgets/word/word_details_display.dart';
+import '../widgets/review/flashcard_widget.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   final List<WordSRS> wordsToReview;
@@ -19,7 +18,6 @@ class ReviewScreen extends ConsumerStatefulWidget {
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   int _currentIndex = 0;
   bool _isUpdating = false;
-  final GlobalKey<FlipCardState> _cardKey = GlobalKey<FlipCardState>();
 
   Future<void> _handleQualitySelected(int quality) async {
     if (_isUpdating) return; // Prevent multiple taps while processing
@@ -37,12 +35,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       // Move to the next word
       setState(() {
         _currentIndex++;
-      });
-      // If the card is flipped, flip it back to the front for the new word
-      if (_cardKey.currentState?.isFront == false) {
-        _cardKey.currentState?.toggleCard();
-      }
-      setState(() {
         _isUpdating = false;
       });
     } else {
@@ -86,32 +78,22 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       body: Column(
         children: [
           Expanded(
-            child: FlipCard(
-              key: _cardKey,
-              flipOnTouch: true,
-              front: Card(
-                margin: const EdgeInsets.all(16),
-                child: Center(
-                  child: Text(currentWordSRS.word,
-                      style: Theme.of(context).textTheme.headlineLarge),
-                ),
-              ),
-              back: Card(
-                margin: const EdgeInsets.all(16),
-                child: FutureBuilder<WordData?>(
-                  future: wordNotifier.getWordDetails(currentWordSRS.word),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: AppLoader());
-                    }
-                    if (snapshot.hasError || !snapshot.hasData) {
-                      return const Center(
-                          child: Text('Error loading word details.'));
-                    }
-                    return WordDetailsDisplay(wordData: snapshot.data!);
-                  },
-                ),
-              ),
+            child: FutureBuilder<WordData?>(
+              future: wordNotifier.getWordDetails(currentWordSRS.word),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: AppLoader());
+                }
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return const Center(
+                      child: Text('Error loading word details.'));
+                }
+                // Use a Key to ensure the widget rebuilds when the word changes
+                return FlashcardWidget(
+                  key: ValueKey(currentWordSRS.word),
+                  wordData: snapshot.data!,
+                );
+              },
             ),
           ),
           Padding(

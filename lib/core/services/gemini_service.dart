@@ -42,6 +42,7 @@ class GeminiService {
         "definition": "...",
         "example": "...",
         "synonyms": ["...", "..."],
+        "phrasal_verbs": ["...", "..."],
         "persian_contexts": [
           {
             "persian_translation": "...",
@@ -153,6 +154,7 @@ class GeminiService {
         definition: jsonMap['definition'] ?? '',
         example: jsonMap['example'] ?? '',
         synonyms: List<String>.from(jsonMap['synonyms'] ?? []),
+        phrasalVerbs: List<String>.from(jsonMap['phrasal_verbs'] ?? []),
         persianContexts: persianContexts,
         // Explicitly map 'definition' from the API response to 'meaning' in WordData
         // if a separate 'meaning' field is not provided by the API.

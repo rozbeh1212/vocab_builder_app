@@ -28,6 +28,8 @@ class WordData extends HiveObject {
   final String? definition;
   @HiveField(9) // New field
   final List<PersianContext>? persianContexts;
+  @HiveField(10) // New field for phrasal verbs
+  final List<String>? phrasalVerbs;
 
   WordData({
     required this.word,
@@ -40,6 +42,7 @@ class WordData extends HiveObject {
     this.audioUrl,
     this.definition, // New field
     this.persianContexts, // New field
+    this.phrasalVerbs,
   });
 
   factory WordData.fromJson(Map<String, dynamic> json) => _$WordDataFromJson(json);
@@ -56,6 +59,7 @@ class WordData extends HiveObject {
     String? audioUrl,
     String? definition, // New field
     List<PersianContext>? persianContexts, // New field
+    List<String>? phrasalVerbs,
   }) {
     return WordData(
       word: word ?? this.word,
@@ -68,6 +72,7 @@ class WordData extends HiveObject {
       audioUrl: audioUrl ?? this.audioUrl,
       definition: definition ?? this.definition, // New field
       persianContexts: persianContexts ?? this.persianContexts, // New field
+      phrasalVerbs: phrasalVerbs ?? this.phrasalVerbs,
     );
   }
 
@@ -90,7 +95,8 @@ class WordData extends HiveObject {
         other.imageUrl == imageUrl &&
         other.audioUrl == audioUrl &&
         other.definition == definition &&
-        listEquals(other.persianContexts, persianContexts);
+        listEquals(other.persianContexts, persianContexts) &&
+        listEquals(other.phrasalVerbs, phrasalVerbs);
   }
 
   @override
@@ -104,6 +110,7 @@ class WordData extends HiveObject {
         imageUrl.hashCode ^
         audioUrl.hashCode ^
         definition.hashCode ^
-        persianContexts.hashCode;
+        persianContexts.hashCode ^
+        phrasalVerbs.hashCode;
   }
 }
