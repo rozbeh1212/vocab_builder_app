@@ -169,9 +169,9 @@ class GeminiService {
                 return PersianContext(
                   meaning: map['persian_translation'] ?? '',
                   example: map['persian_example'] ?? '',
-                  usageNotes: map['usage_notes'],
-                  collocations: List<String>.from(map['collocations'] ?? []),
-                  prepositionUsage: map['preposition_usage'],
+                  usageNotes: map['usage_notes'] as String?,
+                  collocations: (map['collocations'] as List?)?.whereType<String>().toList(),
+                  prepositionUsage: map['preposition_usage'] as String?,
                 );
               })
               .toList() ??
@@ -203,16 +203,16 @@ class GeminiService {
 
       return WordData(
         word: jsonMap['word'] ?? '',
-        pronunciation: jsonMap['pronunciation'] ?? '',
+        pronunciation: jsonMap['pronunciation'] as String?,
         definitions: [mainDefinition], // Use the new definitions list
-        example: jsonMap['example'] ?? '',
-        synonyms: List<String>.from(jsonMap['synonyms'] ?? []),
+        example: jsonMap['example'] as String?,
+        synonyms: (jsonMap['synonyms'] as List?)?.whereType<String>().toList(),
         phrasalVerbs: phrasalVerbs,
         wordForms: wordForms,
         persianContexts: persianContexts,
-        mnemonic: jsonMap['mnemonic'],
+        mnemonic: jsonMap['mnemonic'] as String?,
         // The main 'meaning' can be sourced from the primary definition.
-        meaning: jsonMap['definition'] ?? '',
+        meaning: jsonMap['definition'] as String?,
       );
     } catch (e, st) {
       developer.log(
