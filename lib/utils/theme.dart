@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// [AppTheme] provides a centralized and consistent theming system for the application.
 ///
@@ -27,15 +26,19 @@ class AppTheme {
       surface: const Color(0xFF1E1E1E),
     );
 
-    final textTheme = _buildTextTheme(GoogleFonts.interTextTheme(
+    final textTheme = _buildTextTheme(
       ThemeData(brightness: Brightness.dark).textTheme,
-    ));
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
+      
+      // این خط مهم‌ترین بخش است که فونت محلی را به کل برنامه اعمال می‌کند
+      fontFamily: 'Inter',
+      
       textTheme: textTheme,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       appBarTheme: AppBarTheme(

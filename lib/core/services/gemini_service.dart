@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import '../constants/api_key.dart';
+import '../models/definition.dart';
 import '../models/word_data.dart';
 import '../models/persian_context.dart';
 import '../models/word_form.dart'; // Import WordForm
@@ -194,18 +195,23 @@ class GeminiService {
               .toList() ??
           [];
 
+      // Create a Definition object from the main definition and example.
+      final mainDefinition = Definition(
+        meaning: jsonMap['definition'] as String?,
+        example: jsonMap['example'] as String?,
+      );
+
       return WordData(
         word: jsonMap['word'] ?? '',
         pronunciation: jsonMap['pronunciation'] ?? '',
-        definition: jsonMap['definition'] ?? '',
+        definitions: [mainDefinition], // Use the new definitions list
         example: jsonMap['example'] ?? '',
         synonyms: List<String>.from(jsonMap['synonyms'] ?? []),
         phrasalVerbs: phrasalVerbs,
         wordForms: wordForms,
         persianContexts: persianContexts,
         mnemonic: jsonMap['mnemonic'],
-        // Explicitly map 'definition' from the API response to 'meaning' in WordData
-        // if a separate 'meaning' field is not provided by the API.
+        // The main 'meaning' can be sourced from the primary definition.
         meaning: jsonMap['definition'] ?? '',
       );
     } catch (e, st) {

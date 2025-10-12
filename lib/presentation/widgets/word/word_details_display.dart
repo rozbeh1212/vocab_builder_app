@@ -19,7 +19,14 @@ class WordDetailsDisplay extends StatelessWidget {
           _buildHeader(context),
           const SizedBox(height: 24),
           _buildSectionTitle(context, 'Definition'),
-          Text(wordData.definition ?? '', style: theme.textTheme.bodyLarge),
+          if (wordData.definitions?.isNotEmpty ?? false)
+            ...wordData.definitions!.map((def) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Text(
+                    '• ${def.meaning}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                )),
           const SizedBox(height: 16),
           if (wordData.synonyms?.isNotEmpty ?? false) ...[
             _buildSectionTitle(context, 'Synonyms'),
@@ -205,9 +212,9 @@ class WordDetailsDisplay extends StatelessWidget {
           const SizedBox(height: 8),
           _buildSubDetail(context, 'Usage Notes:', ctx.usageNotes!),
         ],
-        if (ctx.collocations.isNotEmpty) ...[
+        if (ctx.collocations?.isNotEmpty ?? false) ...[
           const SizedBox(height: 4),
-          _buildSubDetail(context, 'Collocations:', ctx.collocations.join(', ')),
+          _buildSubDetail(context, 'Collocations:', ctx.collocations!.join(', ')),
         ],
         if (ctx.prepositionUsage?.isNotEmpty ?? false) ...[
           const SizedBox(height: 4),

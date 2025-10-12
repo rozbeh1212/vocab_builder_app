@@ -18,8 +18,8 @@ class PhrasalVerbAdapter extends TypeAdapter<PhrasalVerb> {
     };
     return PhrasalVerb(
       verb: fields[0] as String,
-      meaning: fields[1] as String,
-      example: fields[2] as String,
+      meaning: fields[1] as String?,
+      example: fields[2] as String?,
     );
   }
 
@@ -52,8 +52,8 @@ class PhrasalVerbAdapter extends TypeAdapter<PhrasalVerb> {
 
 PhrasalVerb _$PhrasalVerbFromJson(Map<String, dynamic> json) => PhrasalVerb(
       verb: json['verb'] as String,
-      meaning: json['meaning'] as String,
-      example: json['example'] as String,
+      meaning: json['meaning'] as String?,
+      example: json['example'] as String?,
     );
 
 Map<String, dynamic> _$PhrasalVerbToJson(PhrasalVerb instance) =>

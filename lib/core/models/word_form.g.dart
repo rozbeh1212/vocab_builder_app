@@ -19,8 +19,8 @@ class WordFormAdapter extends TypeAdapter<WordForm> {
     return WordForm(
       formType: fields[0] as String,
       word: fields[1] as String,
-      meaning: fields[2] as String,
-      example: fields[3] as String,
+      meaning: fields[2] as String?,
+      example: fields[3] as String?,
     );
   }
 
@@ -56,8 +56,8 @@ class WordFormAdapter extends TypeAdapter<WordForm> {
 WordForm _$WordFormFromJson(Map<String, dynamic> json) => WordForm(
       formType: json['formType'] as String,
       word: json['word'] as String,
-      meaning: json['meaning'] as String,
-      example: json['example'] as String,
+      meaning: json['meaning'] as String?,
+      example: json['example'] as String?,
     );
 
 Map<String, dynamic> _$WordFormToJson(WordForm instance) => <String, dynamic>{

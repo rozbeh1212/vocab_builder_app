@@ -20,7 +20,7 @@ class WordService {
   /// it logs the error and returns an empty list to prevent crashes.
   Future<List<Word>> loadWords(String category) async {
     // First try to load category-specific words
-    final String categoryAssetPath = 'data/${category.toLowerCase()}_words.json';
+    final String categoryAssetPath = 'assets/data/${category.toLowerCase()}_words.json';
 
     try {
       // Load the category-specific JSON file as a string from the root bundle.
@@ -50,7 +50,7 @@ class WordService {
 
   /// Loads the default word list from predefined-words.json
   Future<List<Word>> _loadDefaultWords() async {
-    const String defaultAssetPath = 'data/default_words.json';
+    const String defaultAssetPath = 'assets/data/default_words.json';
 
     try {
       // Load the default JSON file as a string from the root bundle.
@@ -84,9 +84,9 @@ class WordService {
   /// Duplicate words are removed to ensure a unique collection.
   Future<List<Word>> loadAllWords() async {
     final List<String> assetPaths = [
-      'data/default_words.json',
-      'data/ielts_words.json',
-      'data/toefl_words.json',
+      'assets/data/default_words.json',
+      'assets/data/ielts_words.json',
+      'assets/data/toefl_words.json',
     ];
 
     final Set<Word> allWords = {};

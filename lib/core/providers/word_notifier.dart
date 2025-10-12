@@ -80,6 +80,12 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
     }
   }
 
+  /// Loads the default list of words from the asset file.
+  Future<void> loadDefaultWords() async {
+    final defaultWords = await _defaultWordService.loadWordsFromAsset('assets/data/default_words.json');
+    await _addWordsFromList(defaultWords);
+  }
+
   /// Loads IELTS words from the asset file and adds them to the vocabulary.
   Future<void> loadIeltsWords() async {
     final ieltsWords = await _defaultWordService.loadWordsFromAsset('assets/data/ielts_words.json');

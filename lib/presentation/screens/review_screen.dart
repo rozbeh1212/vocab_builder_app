@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/word_srs.dart';
 import '../../core/models/word_data.dart';
 import '../../core/providers/word_notifier.dart';
+import '../../core/providers/user_profile_notifier.dart'; // Import the user profile notifier
 import '../widgets/common/app_loader.dart';
 import '../widgets/review/flashcard_widget.dart';
 
@@ -29,6 +30,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final wordNotifier = ref.read(wordNotifierProvider.notifier);
     await wordNotifier.updateWordAfterReview(
         widget.wordsToReview[_currentIndex], quality);
+
+    // Record review completion for daily goals
+    await ref.read(userProfileNotifierProvider.notifier).recordReviewCompletion();
 
     // Check if there are more words to review
     if (_currentIndex < widget.wordsToReview.length - 1) {

@@ -25,7 +25,7 @@ class WordDataAdapter extends TypeAdapter<WordData> {
       antonyms: (fields[5] as List?)?.cast<String>(),
       imageUrl: fields[6] as String?,
       audioUrl: fields[7] as String?,
-      definition: fields[8] as String?,
+      definitions: (fields[8] as List?)?.cast<Definition>(),
       persianContexts: (fields[9] as List?)?.cast<PersianContext>(),
       phrasalVerbs: (fields[10] as List?)?.cast<PhrasalVerb>(),
       wordForms: (fields[11] as List?)?.cast<WordForm>(),
@@ -54,7 +54,7 @@ class WordDataAdapter extends TypeAdapter<WordData> {
       ..writeByte(7)
       ..write(obj.audioUrl)
       ..writeByte(8)
-      ..write(obj.definition)
+      ..write(obj.definitions)
       ..writeByte(9)
       ..write(obj.persianContexts)
       ..writeByte(10)
@@ -93,7 +93,9 @@ WordData _$WordDataFromJson(Map<String, dynamic> json) => WordData(
           .toList(),
       imageUrl: json['imageUrl'] as String?,
       audioUrl: json['audioUrl'] as String?,
-      definition: json['definition'] as String?,
+      definitions: (json['definitions'] as List<dynamic>?)
+          ?.map((e) => Definition.fromJson(e as Map<String, dynamic>))
+          .toList(),
       persianContexts: (json['persianContexts'] as List<dynamic>?)
           ?.map((e) => PersianContext.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -115,7 +117,7 @@ Map<String, dynamic> _$WordDataToJson(WordData instance) => <String, dynamic>{
       'antonyms': instance.antonyms,
       'imageUrl': instance.imageUrl,
       'audioUrl': instance.audioUrl,
-      'definition': instance.definition,
+      'definitions': instance.definitions,
       'persianContexts': instance.persianContexts,
       'phrasalVerbs': instance.phrasalVerbs,
       'wordForms': instance.wordForms,

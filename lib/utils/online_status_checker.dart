@@ -28,8 +28,8 @@ class OnlineStatusChecker {
   ///
   /// It checks if the result is `ConnectivityResult.none` to determine the
   /// online status.
-  bool _parseConnectivityResult(ConnectivityResult result) {
-    // The device is considered offline if the result is `ConnectivityResult.none`.
-    return result != ConnectivityResult.none;
+  bool _parseConnectivityResult(List<ConnectivityResult> result) {
+    // The device is considered offline if all results are `ConnectivityResult.none`.
+    return result.any((element) => element != ConnectivityResult.none);
   }
 }

@@ -23,7 +23,7 @@ class PersianContext {
   final String? usageNotes;
 
   @HiveField(3)
-  final List<String> collocations;
+  final List<String>? collocations;
 
   @HiveField(4)
   final String? prepositionUsage;
@@ -32,7 +32,7 @@ class PersianContext {
     required this.meaning,
     required this.example,
     this.usageNotes,
-    this.collocations = const [],
+    this.collocations,
     this.prepositionUsage,
   });
 

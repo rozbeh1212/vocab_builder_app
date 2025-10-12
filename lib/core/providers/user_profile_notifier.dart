@@ -1,4 +1,6 @@
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/user_profile.dart';
 import '../services/cache_service.dart';
@@ -20,16 +22,26 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile> {
   /// It loads the profile from the cache or creates a new one if none exists.
   @override
   Future<UserProfile> build() async {
-    final cachedProfile = await _cacheService.getUserProfile();
+    try {
+      final cachedProfile = await _cacheService.getUserProfile();
 
-    if (cachedProfile != null) {
-      return cachedProfile;
+      if (cachedProfile != null) {
+        return cachedProfile;
+      }
+
+      // If no profile exists, create a new one with a unique ID and save it.
+      final newProfile = UserProfile(id: _uuid.v4());
+      await _cacheService.saveUserProfile(newProfile);
+      return newProfile;
+    } on HiveError catch (e, st) {
+      developer.log(
+        '[UserProfileNotifier] HiveError while loading user profile: $e',
+        error: e,
+        stackTrace: st,
+        name: 'UserProfileNotifier',
+      );
+      rethrow;
     }
-
-    // If no profile exists, create a new one with a unique ID and save it.
-    final newProfile = UserProfile(id: _uuid.v4());
-    await _cacheService.saveUserProfile(newProfile);
-    return newProfile;
   }
 
   /// Updates the user's experience points and handles leveling up.
@@ -92,6 +104,64 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile> {
       final updatedProfile = previousState.copyWith(
         currentStreak: newStreak,
         lastLoginDate: today,
+      );
+
+      await _cacheService.saveUserProfile(updatedProfile);
+      return updatedProfile;
+    });
+  }
+
+  /// Sets a new daily review goal for the user.
+  Future<void> setDailyGoal(int goal) async {
+    final previousState = await future;
+
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final updatedProfile = previousState.copyWith(dailyReviewGoal: goal);
+      await _cacheService.saveUserProfile(updatedProfile);
+      return updatedProfile;
+    });
+  }
+
+  /// Records the completion of a review, updating daily counts and streaks.
+  Future<void> recordReviewCompletion() async {
+    final previousState = await future;
+
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final lastLogin = previousState.lastLoginDate;
+
+      int newReviewsCompletedToday = previousState.reviewsCompletedToday;
+      int newStreak = previousState.currentStreak;
+
+      // Check if it's a new day since the last login/review.
+      if (lastLogin == null ||
+          DateTime(lastLogin.year, lastLogin.month, lastLogin.day)
+              .isBefore(today)) {
+        // If it's a new day, reset reviewsCompletedToday.
+        newReviewsCompletedToday = 0;
+        // Also update streak logic for new day
+        if (lastLogin == null) {
+          newStreak = 1; // First review ever
+        } else {
+          final lastLoginDay = DateTime(lastLogin.year, lastLogin.month, lastLogin.day);
+          final difference = today.difference(lastLoginDay).inDays;
+          if (difference == 1) {
+            newStreak++; // Consecutive day
+          } else {
+            newStreak = 1; // Streak broken, reset
+          }
+        }
+      }
+
+      newReviewsCompletedToday++; // Increment for the current review
+
+      final updatedProfile = previousState.copyWith(
+        reviewsCompletedToday: newReviewsCompletedToday,
+        lastLoginDate: today,
+        currentStreak: newStreak,
       );
 
       await _cacheService.saveUserProfile(updatedProfile);

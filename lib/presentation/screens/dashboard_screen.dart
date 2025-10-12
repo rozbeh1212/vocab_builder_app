@@ -1,7 +1,9 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers/word_notifier.dart'; // Import the Riverpod notifier
+import '../../core/providers/user_profile_notifier.dart'; // Import UserProfileNotifier
 import '../../utils/app_router.dart'; // Import AppRouter
 
 /// A screen that displays the main dashboard, including a list of all words
@@ -12,9 +14,11 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    developer.log('[DashboardScreen] Build method called.');
     // Watch the wordNotifierProvider to get the state of the word list.
     // The UI will automatically rebuild when this state changes.
     final wordState = ref.watch(wordNotifierProvider);
+    final userProfileAsync = ref.watch(userProfileNotifierProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -57,53 +61,100 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: wordState.when(
-        data: (wordList) {
-          // Show a message if the list of words is empty.
-          if (wordList.isEmpty) {
-            return const Center(
-              child: Text('No words found. Add some words to get started.'),
-            );
-          }
+      body: userProfileAsync.when(
+        data: (profile) {
+          final reviewsCompleted = profile.reviewsCompletedToday;
+          final dailyGoal = profile.dailyReviewGoal;
+          final progress = dailyGoal > 0 ? reviewsCompleted / dailyGoal : 0.0;
 
-          // Filter the list to display only words due for review on the dashboard.
-          final dueForReviewWords =
-              wordList.where((word) => word.dueDate.isBefore(DateTime.now())).toList();
-
-          if (dueForReviewWords.isEmpty) {
-            return const Center(
-              child: Text('No words due for review. Check back later!'),
-            );
-          }
-
-          // Display the list of words using a ListView.builder.
-          return ListView.builder(
-            itemCount: dueForReviewWords.length,
-            itemBuilder: (context, index) {
-              final word = dueForReviewWords[index];
-              final formattedDate =
-                  DateFormat.yMMMd('fa_IR').format(word.dueDate.toLocal());
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: ListTile(
-                  title: Text(word.word,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('مرور بعدی: $formattedDate'),
-                  trailing: const Icon(
-                    Icons.circle,
-                    color: Colors.blueAccent, // Always blue since these are due
-                    size: 12,
+          return Column(
+            children: [
+              Card(
+                margin: const EdgeInsets.all(16.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Current Streak: ${profile.currentStreak} 🔥',
+                            style: theme.textTheme.headlineSmall,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Today's Goal: $reviewsCompleted / $dailyGoal reviews",
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
                   ),
-                  onTap: () {
-                    Navigator.of(context).pushNamed(
-                      AppRouter.wordDetailRoute,
-                      arguments: word.word,
+                ),
+              ),
+              Expanded(
+                child: wordState.when(
+                  data: (wordList) {
+                    // Show a message if the list of words is empty.
+                    if (wordList.isEmpty) {
+                      return const Center(
+                        child: Text('No words found. Add some words to get started.'),
+                      );
+                    }
+
+                    // Filter the list to display only words due for review on the dashboard.
+                    final dueForReviewWords =
+                        wordList.where((word) => word.dueDate.isBefore(DateTime.now())).toList();
+
+                    if (dueForReviewWords.isEmpty) {
+                      return const Center(
+                        child: Text('No words due for review. Check back later!'),
+                      );
+                    }
+
+                    // Display the list of words using a ListView.builder.
+                    return ListView.builder(
+                      itemCount: dueForReviewWords.length,
+                      itemBuilder: (context, index) {
+                        final word = dueForReviewWords[index];
+                        final formattedDate =
+                            DateFormat.yMMMd('fa_IR').format(word.dueDate.toLocal());
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          child: ListTile(
+                            title: Text(word.word,
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('مرور بعدی: $formattedDate'),
+                            trailing: const Icon(
+                              Icons.circle,
+                              color: Colors.blueAccent, // Always blue since these are due
+                              size: 12,
+                            ),
+                            onTap: () {
+                              Navigator.of(context).pushNamed(
+                                AppRouter.wordDetailRoute,
+                                arguments: word.word,
+                              );
+                            },
+                          ),
+                        );
+                      },
                     );
                   },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, st) => Center(child: Text('Error: ${e.toString()}')),
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

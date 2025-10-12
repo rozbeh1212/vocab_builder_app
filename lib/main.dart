@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:timezone/data/latest.dart' as tz;
 import 'core/services/cache_service.dart';
+import 'core/services/notification_service.dart'; // Import NotificationService
 import 'utils/app_router.dart';
 import 'utils/theme.dart';
 
@@ -16,9 +18,15 @@ Future<void> initializeApp() async {
   await initializeDateFormatting('fa_IR', null);
   // Initialize the local database service (Hive).
   await CacheService.instance.init();
+  developer.log('[main.dart] CacheService initialized successfully.');
+  // Initialize timezone data for notifications
+  tz.initializeTimeZones();
+  // Initialize notification service
+  await NotificationService().init();
 }
 
 void main() {
+  developer.log('[main.dart] App initialization started.');
   // Use runZonedGuarded for top-level error catching.
   runZonedGuarded(() {
     runApp(

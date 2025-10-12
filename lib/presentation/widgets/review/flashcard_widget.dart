@@ -56,7 +56,12 @@ class FlashcardWidget extends StatelessWidget {
               ),
             ),
             const Divider(height: 32),
-            _buildSection(context, 'Definition', wordData.definition ?? ''),
+            if (wordData.definitions?.isNotEmpty ?? false)
+              _buildSection(
+                context,
+                'Definition',
+                wordData.definitions!.map((d) => d.meaning).join('\n'),
+              ),
             if (wordData.synonyms?.isNotEmpty ?? false)
               _buildSection(context, 'Synonyms', wordData.synonyms?.join(', ') ?? ''),
             _buildSection(
@@ -129,9 +134,9 @@ class FlashcardWidget extends StatelessWidget {
             const SizedBox(height: 8),
             _buildSubDetail(context, 'Usage Notes:', ctx.usageNotes!),
           ],
-          if (ctx.collocations.isNotEmpty) ...[
+          if (ctx.collocations?.isNotEmpty ?? false) ...[
             const SizedBox(height: 4),
-            _buildSubDetail(context, 'Collocations:', ctx.collocations.join(', ')),
+            _buildSubDetail(context, 'Collocations:', ctx.collocations!.join(', ')),
           ],
           if (ctx.prepositionUsage?.isNotEmpty ?? false) ...[
             const SizedBox(height: 4),

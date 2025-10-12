@@ -10,19 +10,19 @@ class PhrasalVerb with EquatableMixin {
   @HiveField(0)
   final String verb;
   @HiveField(1)
-  final String meaning;
+  final String? meaning;
   @HiveField(2)
-  final String example;
+  final String? example;
 
   const PhrasalVerb({
     required this.verb,
-    required this.meaning,
-    required this.example,
+    this.meaning,
+    this.example,
   });
 
   factory PhrasalVerb.fromJson(Map<String, dynamic> json) => _$PhrasalVerbFromJson(json);
   Map<String, dynamic> toJson() => _$PhrasalVerbToJson(this);
 
   @override
-  List<Object> get props => [verb, meaning, example];
+  List<Object?> get props => [verb, meaning, example];
 }

@@ -22,13 +22,15 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       level: fields[2] as int,
       currentStreak: fields[3] as int,
       lastLoginDate: fields[4] as DateTime?,
+      dailyReviewGoal: fields[5] as int,
+      reviewsCompletedToday: fields[6] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +40,11 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(3)
       ..write(obj.currentStreak)
       ..writeByte(4)
-      ..write(obj.lastLoginDate);
+      ..write(obj.lastLoginDate)
+      ..writeByte(5)
+      ..write(obj.dailyReviewGoal)
+      ..writeByte(6)
+      ..write(obj.reviewsCompletedToday);
   }
 
   @override

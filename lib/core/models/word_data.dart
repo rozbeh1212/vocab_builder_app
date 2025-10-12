@@ -1,12 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
-import 'package:json_annotation/json_annotation.dart';
-import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
-import 'package:json_annotation/json_annotation.dart';
+
+import 'package:vocab_builder_app/core/models/definition.dart';
 import 'package:vocab_builder_app/core/models/persian_context.dart'; // Import PersianContext
 import 'package:vocab_builder_app/core/models/word_form.dart'; // Import WordForm
 import 'package:vocab_builder_app/core/models/phrasal_verb.dart'; // Import PhrasalVerb
@@ -33,7 +29,7 @@ class WordData extends HiveObject {
   @HiveField(7)
   final String? audioUrl;
   @HiveField(8) // New field
-  final String? definition;
+  final List<Definition>? definitions;
   @HiveField(9) // New field
   final List<PersianContext>? persianContexts;
   @HiveField(10) // Updated field for phrasal verbs
@@ -52,7 +48,7 @@ class WordData extends HiveObject {
     this.antonyms,
     this.imageUrl,
     this.audioUrl,
-    this.definition, // New field
+    this.definitions, // New field
     this.persianContexts, // New field
     this.phrasalVerbs,
     this.wordForms,
@@ -71,7 +67,7 @@ class WordData extends HiveObject {
     List<String>? antonyms,
     String? imageUrl,
     String? audioUrl,
-    String? definition, // New field
+    List<Definition>? definitions, // New field
     List<PersianContext>? persianContexts, // New field
     List<PhrasalVerb>? phrasalVerbs,
     List<WordForm>? wordForms,
@@ -86,7 +82,7 @@ class WordData extends HiveObject {
       antonyms: antonyms ?? this.antonyms,
       imageUrl: imageUrl ?? this.imageUrl,
       audioUrl: audioUrl ?? this.audioUrl,
-      definition: definition ?? this.definition, // New field
+      definitions: definitions ?? this.definitions, // New field
       persianContexts: persianContexts ?? this.persianContexts, // New field
       phrasalVerbs: phrasalVerbs ?? this.phrasalVerbs,
       wordForms: wordForms ?? this.wordForms,
@@ -96,7 +92,7 @@ class WordData extends HiveObject {
 
   @override
   String toString() {
-    return 'WordData(word: $word, meaning: $meaning, example: $example, pronunciation: $pronunciation, synonyms: $synonyms, antonyms: $antonyms, imageUrl: $imageUrl, audioUrl: $audioUrl, definition: $definition, persianContexts: $persianContexts, phrasalVerbs: $phrasalVerbs, wordForms: $wordForms, mnemonic: $mnemonic)';
+    return 'WordData(word: $word, meaning: $meaning, example: $example, pronunciation: $pronunciation, synonyms: $synonyms, antonyms: $antonyms, imageUrl: $imageUrl, audioUrl: $audioUrl, definitions: $definitions, persianContexts: $persianContexts, phrasalVerbs: $phrasalVerbs, wordForms: $wordForms, mnemonic: $mnemonic)';
   }
 
   @override
@@ -112,7 +108,7 @@ class WordData extends HiveObject {
         listEquals(other.antonyms, antonyms) &&
         other.imageUrl == imageUrl &&
         other.audioUrl == audioUrl &&
-        other.definition == definition &&
+        listEquals(other.definitions, definitions) &&
         listEquals(other.persianContexts, persianContexts) &&
         listEquals(other.phrasalVerbs, phrasalVerbs) &&
         listEquals(other.wordForms, wordForms) &&
@@ -129,7 +125,7 @@ class WordData extends HiveObject {
         antonyms.hashCode ^
         imageUrl.hashCode ^
         audioUrl.hashCode ^
-        definition.hashCode ^
+        definitions.hashCode ^
         persianContexts.hashCode ^
         phrasalVerbs.hashCode ^
         wordForms.hashCode ^

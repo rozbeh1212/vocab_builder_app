@@ -7,27 +7,18 @@ import '../../utils/date_formatter.dart';
 import '../widgets/common/app_loader.dart';
 import '../widgets/word/word_details_display.dart';
 
-class WordDetailScreen extends ConsumerStatefulWidget {
+// Define a FutureProvider to fetch word details.
+final wordDetailsProvider =
+    FutureProvider.autoDispose.family<WordData?, String>((ref, word) {
+  return ref.watch(wordNotifierProvider.notifier).getWordDetails(word);
+});
+
+class WordDetailScreen extends ConsumerWidget {
   final String word;
 
   const WordDetailScreen({super.key, required this.word});
 
-  @override
-  ConsumerState<WordDetailScreen> createState() => _WordDetailScreenState();
-}
-
-class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
-  late final Future<WordData?> _wordDetailsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    // Fetch details once when the screen is initialized.
-    _wordDetailsFuture =
-        ref.read(wordNotifierProvider.notifier).getWordDetails(widget.word);
-  }
-
-  void _showReviewModal(BuildContext context, WordSRS wordSrs) {
+  void _showReviewModal(BuildContext context, WordSRS wordSrs, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       builder: (_) {
@@ -58,7 +49,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                         description: 'Needs practice',
                         onPressed: () async {
                           await notifier.updateWordAfterReview(wordSrs, 1);
-                          if (mounted) Navigator.of(context).pop();
+                          Navigator.of(context).pop();
                         },
                       ),
                       _ReviewButton(
@@ -67,7 +58,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                         description: 'Remembered',
                         onPressed: () async {
                           await notifier.updateWordAfterReview(wordSrs, 3);
-                          if (mounted) Navigator.of(context).pop();
+                          Navigator.of(context).pop();
                         },
                       ),
                       _ReviewButton(
@@ -76,7 +67,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                         description: 'Perfect recall',
                         onPressed: () async {
                           await notifier.updateWordAfterReview(wordSrs, 5);
-                          if (mounted) Navigator.of(context).pop();
+                          Navigator.of(context).pop();
                         },
                       ),
                     ],
@@ -91,47 +82,49 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final wordState = ref.watch(wordNotifierProvider);
     final srsWords = wordState.value ?? [];
     final wordSrs = srsWords.firstWhere(
-      (s) => s.word.toLowerCase() == widget.word.toLowerCase(),
+      (s) => s.word.toLowerCase() == word.toLowerCase(),
       orElse: () => WordSRS(word: '', dueDate: DateTime(0)), // Dummy value
     );
     final isInSrs = wordSrs.word.isNotEmpty;
 
+    // Watch the new FutureProvider.
+    final wordDetailsAsync = ref.watch(wordDetailsProvider(word));
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.word),
+        title: Text(word),
       ),
-      body: FutureBuilder<WordData?>(
-        future: _wordDetailsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const AppLoader(),
-                  const SizedBox(height: 16),
-                  Text('Loading details for "${widget.word}"...',
-                      style: Theme.of(context).textTheme.titleMedium),
-                ],
-              ),
-            );
-          }
-
-          if (snapshot.hasError || snapshot.data == null) {
+      body: wordDetailsAsync.when(
+        loading: () => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const AppLoader(),
+              const SizedBox(height: 16),
+              Text('Loading details for "$word"...',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+        ),
+        error: (error, stack) => const Center(
+          child: Text(
+            'Error loading details.\nPlease check your connection.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        data: (wordData) {
+          if (wordData == null) {
             return const Center(
               child: Text(
-                'Error loading details.\nPlease check your connection.',
+                'Word details not found.',
                 textAlign: TextAlign.center,
               ),
             );
           }
-
-          final wordData = snapshot.data!;
-
           return Column(
             children: [
               Expanded(child: WordDetailsDisplay(wordData: wordData)),
@@ -147,7 +140,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                           : () async {
                               await ref
                                   .read(wordNotifierProvider.notifier)
-                                  .addWord(widget.word);
+                                  .addWord(word);
                             },
                       icon: wordState.isLoading
                           ? const SizedBox(
@@ -159,7 +152,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                     ),
                     if (isInSrs)
                       ElevatedButton(
-                        onPressed: () => _showReviewModal(context, wordSrs),
+                        onPressed: () => _showReviewModal(context, wordSrs, ref),
                         child: const Text('Review'),
                       ),
                   ],

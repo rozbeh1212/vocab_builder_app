@@ -1,11 +1,17 @@
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/achievement.dart';
+import '../models/common_collocation.dart';
+import '../models/definition.dart';
 import '../models/fsrs_card_data.dart';
 import '../models/persian_context.dart';
+import '../models/phrasal_verb.dart';
+import '../models/preposition_usage.dart';
 import '../models/user_profile.dart';
 import '../models/word_data.dart';
+import '../models/word_form.dart';
 import '../models/word_srs.dart';
 
 /// [CacheService] handles all local data persistence using the Hive database.
@@ -40,6 +46,7 @@ class CacheService {
   /// This must be called once at application startup (e.g., in `main.dart`)
   /// before any other database operations are performed.
   Future<void> init() async {
+    developer.log('[CacheService] Initialization started.');
     // Initialize Hive with a platform-specific path.
     if (!kIsWeb) {
       final appDocumentDir = await getApplicationDocumentsDirectory();
@@ -50,29 +57,51 @@ class CacheService {
 
     // Register all necessary TypeAdapters to serialize/deserialize custom objects.
     _registerAdapters();
+    developer.log('[CacheService] All adapters registered.');
 
     // Open boxes to make them available for read/write operations.
     _srsBox = await Hive.openBox<WordSRS>(_srsBoxName);
     _detailsBox = await Hive.openBox<WordData>(_detailsBoxName);
     _userProfileBox = await Hive.openBox<UserProfile>(_userProfileBoxName);
     _achievementsBox = await Hive.openBox<Achievement>(_achievementsBoxName);
+    developer.log('[CacheService] All boxes opened.');
   }
 
   void _registerAdapters() {
-    if (!Hive.isAdapterRegistered(WordSRSAdapter().typeId)) {
-      Hive.registerAdapter(WordSRSAdapter());
-    }
-    if (!Hive.isAdapterRegistered(WordDataAdapter().typeId)) {
-      Hive.registerAdapter(WordDataAdapter());
-    }
-    if (!Hive.isAdapterRegistered(PersianContextAdapter().typeId)) {
-      Hive.registerAdapter(PersianContextAdapter());
-    }
+    // User-related models
     if (!Hive.isAdapterRegistered(UserProfileAdapter().typeId)) {
       Hive.registerAdapter(UserProfileAdapter());
     }
     if (!Hive.isAdapterRegistered(AchievementAdapter().typeId)) {
       Hive.registerAdapter(AchievementAdapter());
+    }
+
+    // Word and definition models
+    if (!Hive.isAdapterRegistered(WordDataAdapter().typeId)) {
+      Hive.registerAdapter(WordDataAdapter());
+    }
+    if (!Hive.isAdapterRegistered(DefinitionAdapter().typeId)) {
+      Hive.registerAdapter(DefinitionAdapter());
+    }
+    if (!Hive.isAdapterRegistered(PersianContextAdapter().typeId)) {
+      Hive.registerAdapter(PersianContextAdapter());
+    }
+    if (!Hive.isAdapterRegistered(PhrasalVerbAdapter().typeId)) {
+      Hive.registerAdapter(PhrasalVerbAdapter());
+    }
+    if (!Hive.isAdapterRegistered(WordFormAdapter().typeId)) {
+      Hive.registerAdapter(WordFormAdapter());
+    }
+    if (!Hive.isAdapterRegistered(CommonCollocationAdapter().typeId)) {
+      Hive.registerAdapter(CommonCollocationAdapter());
+    }
+    if (!Hive.isAdapterRegistered(PrepositionUsageAdapter().typeId)) {
+      Hive.registerAdapter(PrepositionUsageAdapter());
+    }
+
+    // SRS models
+    if (!Hive.isAdapterRegistered(WordSRSAdapter().typeId)) {
+      Hive.registerAdapter(WordSRSAdapter());
     }
     if (!Hive.isAdapterRegistered(FsrsCardDataAdapter().typeId)) {
       Hive.registerAdapter(FsrsCardDataAdapter());

@@ -25,12 +25,20 @@ class UserProfile {
   @HiveField(4)
   final DateTime? lastLoginDate;
 
+  @HiveField(5)
+  final int dailyReviewGoal;
+
+  @HiveField(6)
+  final int reviewsCompletedToday;
+
   const UserProfile({
     required this.id,
     this.experiencePoints = 0,
     this.level = 1,
     this.currentStreak = 0,
     this.lastLoginDate,
+    this.dailyReviewGoal = 10,
+    this.reviewsCompletedToday = 0,
   });
 
   /// Creates a copy of this [UserProfile] instance with optional new values.
@@ -40,6 +48,8 @@ class UserProfile {
     int? level,
     int? currentStreak,
     DateTime? lastLoginDate,
+    int? dailyReviewGoal,
+    int? reviewsCompletedToday,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -47,12 +57,15 @@ class UserProfile {
       level: level ?? this.level,
       currentStreak: currentStreak ?? this.currentStreak,
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
+      dailyReviewGoal: dailyReviewGoal ?? this.dailyReviewGoal,
+      reviewsCompletedToday:
+          reviewsCompletedToday ?? this.reviewsCompletedToday,
     );
   }
 
   @override
   String toString() {
-    return 'UserProfile(id: $id, experiencePoints: $experiencePoints, level: $level, currentStreak: $currentStreak, lastLoginDate: $lastLoginDate)';
+    return 'UserProfile(id: $id, experiencePoints: $experiencePoints, level: $level, currentStreak: $currentStreak, lastLoginDate: $lastLoginDate, dailyReviewGoal: $dailyReviewGoal, reviewsCompletedToday: $reviewsCompletedToday)';
   }
 
   @override
@@ -64,7 +77,9 @@ class UserProfile {
         other.experiencePoints == experiencePoints &&
         other.level == level &&
         other.currentStreak == currentStreak &&
-        other.lastLoginDate == lastLoginDate;
+        other.lastLoginDate == lastLoginDate &&
+        other.dailyReviewGoal == dailyReviewGoal &&
+        other.reviewsCompletedToday == reviewsCompletedToday;
   }
 
   @override
@@ -73,6 +88,8 @@ class UserProfile {
         experiencePoints.hashCode ^
         level.hashCode ^
         currentStreak.hashCode ^
-        lastLoginDate.hashCode;
+        lastLoginDate.hashCode ^
+        dailyReviewGoal.hashCode ^
+        reviewsCompletedToday.hashCode;
   }
 }

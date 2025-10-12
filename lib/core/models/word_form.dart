@@ -12,20 +12,20 @@ class WordForm with EquatableMixin {
   @HiveField(1)
   final String word;
   @HiveField(2)
-  final String meaning;
+  final String? meaning;
   @HiveField(3)
-  final String example;
+  final String? example;
 
   const WordForm({
     required this.formType,
     required this.word,
-    required this.meaning,
-    required this.example,
+    this.meaning,
+    this.example,
   });
 
   factory WordForm.fromJson(Map<String, dynamic> json) => _$WordFormFromJson(json);
   Map<String, dynamic> toJson() => _$WordFormToJson(this);
 
   @override
-  List<Object> get props => [formType, word, meaning, example];
+  List<Object?> get props => [formType, word, meaning, example];
 }
