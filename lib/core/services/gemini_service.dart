@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_key.dart';
 import '../models/definition.dart';
@@ -113,42 +114,59 @@ class GeminiService {
         }),
       );
 
+      if (kDebugMode) {
+        developer.log('Gemini API Response Status Code: ${response.statusCode}', name: 'GeminiService');
+  // Avoid logging full response bodies in production; truncate for debug.
+  final body = response.body;
+        final truncated = body.length > 300 ? '${body.substring(0, 300)}...<truncated>' : body;
+        developer.log('Gemini API Response Body (truncated): $truncated', name: 'GeminiService');
+      }
+
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
         final candidates = responseBody['candidates'] as List?;
         if (candidates == null || candidates.isEmpty) {
+          developer.log('No candidates found in Gemini response.', name: 'GeminiService');
           throw Exception('No candidates found in Gemini response.');
         }
         final content = candidates[0]['content'];
         final parts = content['parts'] as List?;
         if (parts == null || parts.isEmpty) {
+          developer.log('No parts found in Gemini response content.', name: 'GeminiService');
           throw Exception('No parts found in Gemini response content.');
         }
         String jsonString = parts[0]['text'] as String;
+        if (kDebugMode) {
+          // Show only a safe/truncated preview in debug.
+          final preview = jsonString.length > 500 ? '${jsonString.substring(0, 500)}...<truncated>' : jsonString;
+          developer.log('Raw JSON string preview from Gemini: $preview', name: 'GeminiService');
+        }
+
         // Remove markdown code block delimiters if present
-        if (jsonString.startsWith('```json')) {
-          jsonString = jsonString.substring(7);
-        }
-        if (jsonString.endsWith('```')) {
-          jsonString = jsonString.substring(0, jsonString.length - 3);
-        }
+        jsonString = jsonString.replaceAll(RegExp(r'```json|```'), '');
         
         return _parseWordDataFromJson(jsonString.trim());
       } else {
-        developer.log(
-          'Gemini API Error: ${response.statusCode}\nResponse Body: ${response.body}',
-          name: 'GeminiService',
-          error: response.body,
-        );
+        if (kDebugMode) {
+          final body = response.body;
+          final truncated = body.length > 300 ? '${body.substring(0, 300)}...<truncated>' : body;
+          developer.log('Gemini API Error: ${response.statusCode}\nResponse Body (truncated): $truncated', name: 'GeminiService');
+        } else {
+          developer.log('Gemini API Error: ${response.statusCode}', name: 'GeminiService');
+        }
         return null;
       }
     } catch (e, st) {
-      developer.log(
-        'An error occurred while calling Gemini API: $e',
-        name: 'GeminiService',
-        error: e,
-        stackTrace: st,
-      );
+      if (kDebugMode) {
+        developer.log(
+          'An error occurred while calling Gemini API: $e',
+          name: 'GeminiService',
+          error: e,
+          stackTrace: st,
+        );
+      } else {
+        developer.log('An error occurred while calling Gemini API: $e', name: 'GeminiService');
+      }
       return null;
     }
   }
@@ -165,35 +183,51 @@ class GeminiService {
       final contextsFromJson = jsonMap['persian_contexts'] as List?;
       final List<PersianContext> persianContexts = contextsFromJson
               ?.map((contextJson) {
-                final map = contextJson as Map<String, dynamic>;
-                return PersianContext(
-                  meaning: map['persian_translation'] ?? '',
-                  example: map['persian_example'] ?? '',
-                  usageNotes: map['usage_notes'] as String?,
-                  collocations: (map['collocations'] as List?)?.whereType<String>().toList(),
-                  prepositionUsage: map['preposition_usage'] as String?,
-                );
+                if (contextJson is Map<String, dynamic>) {
+                  return PersianContext(
+                    meaning: contextJson['persian_translation'] as String? ?? '',
+                    example: contextJson['persian_example'] as String? ?? '',
+                    usageNotes: contextJson['usage_notes'] as String?,
+                    collocations: (contextJson['collocations'] as List?)?.whereType<String>().toList(),
+                    prepositionUsage: contextJson['preposition_usage'] as String?,
+                  );
+                }
+                return null; // Skip invalid entries
               })
+              .whereType<PersianContext>() // Filter out nulls
               .toList() ??
           [];
 
+      // Manually parse WordForm to handle potential nulls gracefully
       final wordFormsFromJson = jsonMap['word_forms'] as List?;
-      final List<WordForm> wordForms = wordFormsFromJson
-              ?.map((formJson) {
-                final map = formJson as Map<String, dynamic>;
-                return WordForm.fromJson(map);
-              })
-              .toList() ??
-          [];
+      final List<WordForm> wordForms = [];
+      if (wordFormsFromJson != null) {
+        for (var formJson in wordFormsFromJson) {
+          if (formJson is Map<String, dynamic>) {
+            wordForms.add(WordForm(
+              formType: formJson['form_type'] as String? ?? '',
+              word: formJson['word'] as String? ?? '',
+              meaning: formJson['meaning'] as String? ?? '',
+              example: formJson['example'] as String? ?? '',
+            ));
+          }
+        }
+      }
 
+      // Manually parse PhrasalVerb to handle potential nulls gracefully
       final phrasalVerbsFromJson = jsonMap['phrasal_verbs'] as List?;
-      final List<PhrasalVerb> phrasalVerbs = phrasalVerbsFromJson
-              ?.map((pvJson) {
-                final map = pvJson as Map<String, dynamic>;
-                return PhrasalVerb.fromJson(map);
-              })
-              .toList() ??
-          [];
+      final List<PhrasalVerb> phrasalVerbs = [];
+      if (phrasalVerbsFromJson != null) {
+        for (var pvJson in phrasalVerbsFromJson) {
+          if (pvJson is Map<String, dynamic>) {
+            phrasalVerbs.add(PhrasalVerb(
+              verb: pvJson['verb'] as String? ?? '',
+              meaning: pvJson['meaning'] as String? ?? '',
+              example: pvJson['example'] as String? ?? '',
+            ));
+          }
+        }
+      }
 
       // Create a Definition object from the main definition and example.
       final mainDefinition = Definition(
@@ -202,7 +236,7 @@ class GeminiService {
       );
 
       return WordData(
-        word: jsonMap['word'] ?? '',
+        word: jsonMap['word'] as String? ?? '',
         pronunciation: jsonMap['pronunciation'] as String?,
         definitions: [mainDefinition], // Use the new definitions list
         example: jsonMap['example'] as String?,

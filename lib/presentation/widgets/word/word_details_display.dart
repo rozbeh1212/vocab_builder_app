@@ -96,7 +96,7 @@ class WordDetailsDisplay extends StatelessWidget {
             wordData.example ?? '',
             style: theme.textTheme.bodyLarge?.copyWith(
               fontStyle: FontStyle.italic,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color: theme.colorScheme.onSurface.withAlpha((0.8 * 255).round()),
             ),
           ),
           if (wordData.mnemonic?.isNotEmpty ?? false) ...[
@@ -151,7 +151,7 @@ class WordDetailsDisplay extends StatelessWidget {
                   Text(
                     wordData.pronunciation ?? '',
                     style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+           ?.copyWith(color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round())),
                   ),
                 ],
               ),
@@ -195,17 +195,17 @@ class WordDetailsDisplay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          ctx.meaning,
+          ctx.meaning ?? '',
           style: theme.textTheme.titleLarge
               ?.copyWith(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
         ),
         const SizedBox(height: 4),
         Text(
-          ctx.example,
+          ctx.example ?? '',
           style: theme.textTheme.bodyLarge?.copyWith(
             fontStyle: FontStyle.italic,
             fontFamily: 'Vazirmatn',
-            color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withAlpha((0.8 * 255).round()),
           ),
         ),
         if (ctx.usageNotes?.isNotEmpty ?? false) ...[

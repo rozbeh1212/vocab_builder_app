@@ -93,7 +93,7 @@ class DashboardScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       LinearProgressIndicator(
                         value: progress,
-                        backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
+                        backgroundColor: theme.colorScheme.onSurface.withAlpha((0.2 * 255).round()),
                         color: theme.colorScheme.primary,
                       ),
                     ],

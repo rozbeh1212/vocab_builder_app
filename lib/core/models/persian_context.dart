@@ -14,10 +14,10 @@ part 'persian_context.g.dart';
 @HiveType(typeId: 2)
 class PersianContext {
   @HiveField(0)
-  final String meaning;
+  final String? meaning;
 
   @HiveField(1)
-  final String example;
+  final String? example;
 
   @HiveField(2)
   final String? usageNotes;
@@ -29,8 +29,8 @@ class PersianContext {
   final String? prepositionUsage;
 
   const PersianContext({
-    required this.meaning,
-    required this.example,
+    this.meaning,
+    this.example,
     this.usageNotes,
     this.collocations,
     this.prepositionUsage,

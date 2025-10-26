@@ -17,8 +17,8 @@ class PersianContextAdapter extends TypeAdapter<PersianContext> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PersianContext(
-      meaning: fields[0] as String,
-      example: fields[1] as String,
+      meaning: fields[0] as String?,
+      example: fields[1] as String?,
       usageNotes: fields[2] as String?,
       collocations: (fields[3] as List?)?.cast<String>(),
       prepositionUsage: fields[4] as String?,
@@ -58,8 +58,8 @@ class PersianContextAdapter extends TypeAdapter<PersianContext> {
 
 PersianContext _$PersianContextFromJson(Map<String, dynamic> json) =>
     PersianContext(
-      meaning: json['meaning'] as String,
-      example: json['example'] as String,
+      meaning: json['meaning'] as String?,
+      example: json['example'] as String?,
       usageNotes: json['usageNotes'] as String?,
       collocations: (json['collocations'] as List<dynamic>?)
           ?.map((e) => e as String)

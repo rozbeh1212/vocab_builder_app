@@ -1,6 +1,7 @@
 import 'dart:developer' as developer; // Import for logging
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/word_data.dart';
+import '../models/definition.dart';
 import '../models/word_srs.dart';
 import '../services/cache_service.dart';
 import '../services/default_word_service.dart'; // Import DefaultWordService
@@ -202,6 +203,32 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
       if (details != null) {
         // If fetched successfully, save to cache for next time.
         await _cacheService.saveWordDetails(word, details);
+      }
+      // If still null, provide a minimal fallback WordData so UI can show something.
+      if (details == null) {
+        final fallback = WordData(
+          word: word,
+          meaning: 'معنی در دسترس نیست — برای دریافت معنی واقعی سرویس Gemini را فعال کنید.',
+          example: '',
+          pronunciation: null,
+          synonyms: null,
+          antonyms: null,
+          imageUrl: null,
+          audioUrl: null,
+          definitions: [
+            Definition(
+              partOfSpeech: '',
+              meaning: 'معنی در دسترس نیست — سرویس Gemini فعال نیست.',
+              example: '',
+            ),
+          ],
+          persianContexts: null,
+          phrasalVerbs: null,
+          wordForms: null,
+          mnemonic: null,
+        );
+        // Do not necessarily cache the fallback; just return it for display.
+        return fallback;
       }
       return details;
     } catch (e) {

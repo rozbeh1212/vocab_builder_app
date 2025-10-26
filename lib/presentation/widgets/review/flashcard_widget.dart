@@ -52,7 +52,7 @@ class FlashcardWidget extends StatelessWidget {
             Text(
               wordData.pronunciation ?? '',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
               ),
             ),
             const Divider(height: 32),
@@ -115,19 +115,19 @@ class FlashcardWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            ctx.meaning,
+            ctx.meaning ?? '',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               fontFamily: 'Vazirmatn', // Assuming a Persian font is configured
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            ctx.example,
+            Text(
+            ctx.example ?? '',
             style: theme.textTheme.bodyLarge?.copyWith(
               fontStyle: FontStyle.italic,
               fontFamily: 'Vazirmatn',
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withAlpha((0.8 * 255).round()),
             ),
           ),
           if (ctx.usageNotes?.isNotEmpty ?? false) ...[

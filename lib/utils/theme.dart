@@ -22,7 +22,7 @@ class AppTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF64B5F6), // A pleasant blue as the primary color
       brightness: Brightness.dark,
-      background: const Color(0xFF121212),
+      // Avoid deprecated `background` parameter; set scaffoldBackgroundColor explicitly below.
       surface: const Color(0xFF1E1E1E),
     );
 
@@ -75,7 +75,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
-          side: BorderSide(color: colorScheme.primary.withOpacity(0.5)),
+          side: BorderSide(color: colorScheme.primary.withAlpha((0.5 * 255).round())),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusSM)),
@@ -83,7 +83,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surface.withOpacity(0.5),
+  fillColor: colorScheme.surface.withAlpha((0.5 * 255).round()),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSM),
           borderSide: BorderSide.none,
@@ -94,7 +94,7 @@ class AppTheme {
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withAlpha((0.12 * 255).round()),
         thickness: 1,
       ),
       snackBarTheme: SnackBarThemeData(

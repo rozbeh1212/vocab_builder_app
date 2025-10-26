@@ -19,8 +19,8 @@ class WordService {
   /// Returns a `Future<List<Word>>`. If all assets fail to load or parse,
   /// it logs the error and returns an empty list to prevent crashes.
   Future<List<Word>> loadWords(String category) async {
-    // First try to load category-specific words
-    final String categoryAssetPath = 'assets/data/${category.toLowerCase()}_words.json';
+  // First try to load category-specific words (use full assets path)
+  final String categoryAssetPath = 'assets/data/${category.toLowerCase()}_words.json';
 
     try {
       // Load the category-specific JSON file as a string from the root bundle.
@@ -50,7 +50,7 @@ class WordService {
 
   /// Loads the default word list from predefined-words.json
   Future<List<Word>> _loadDefaultWords() async {
-    const String defaultAssetPath = 'assets/data/default_words.json';
+  const String defaultAssetPath = 'assets/data/default_words.json';
 
     try {
       // Load the default JSON file as a string from the root bundle.

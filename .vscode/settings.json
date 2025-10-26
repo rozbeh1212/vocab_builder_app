@@ -1,0 +1,4 @@
+{
+    // Keep VS Code extension settings here. Do NOT store real API keys in this file.
+    "CodeGPT.apiKey": "<REDACTED>"
+}

@@ -5,6 +5,7 @@ import '../../core/models/word_srs.dart';
 import '../../core/providers/word_notifier.dart';
 import '../../utils/date_formatter.dart';
 import '../widgets/common/app_loader.dart';
+import 'package:flutter/services.dart';
 import '../widgets/word/word_details_display.dart';
 
 // Define a FutureProvider to fetch word details.
@@ -48,8 +49,9 @@ class WordDetailScreen extends ConsumerWidget {
                         label: 'Again',
                         description: 'Needs practice',
                         onPressed: () async {
+                          final navigator = Navigator.of(context);
                           await notifier.updateWordAfterReview(wordSrs, 1);
-                          Navigator.of(context).pop();
+                          navigator.pop();
                         },
                       ),
                       _ReviewButton(
@@ -57,8 +59,9 @@ class WordDetailScreen extends ConsumerWidget {
                         label: 'Good',
                         description: 'Remembered',
                         onPressed: () async {
+                          final navigator = Navigator.of(context);
                           await notifier.updateWordAfterReview(wordSrs, 3);
-                          Navigator.of(context).pop();
+                          navigator.pop();
                         },
                       ),
                       _ReviewButton(
@@ -66,8 +69,9 @@ class WordDetailScreen extends ConsumerWidget {
                         label: 'Easy',
                         description: 'Perfect recall',
                         onPressed: () async {
+                          final navigator = Navigator.of(context);
                           await notifier.updateWordAfterReview(wordSrs, 5);
-                          Navigator.of(context).pop();
+                          navigator.pop();
                         },
                       ),
                     ],
@@ -118,10 +122,65 @@ class WordDetailScreen extends ConsumerWidget {
         ),
         data: (wordData) {
           if (wordData == null) {
-            return const Center(
-              child: Text(
-                'Word details not found.',
-                textAlign: TextAlign.center,
+            // Provide a helpful message if details couldn't be fetched (e.g., missing API key)
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.info_outline, size: 56, color: Colors.orange),
+                    const SizedBox(height: 12),
+                    Text(
+                      'جزئیات کلمه در دسترس نیست.',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'برای نمایش معنی و مثال‌ها از سرویس هوش مصنوعی (Gemini) نیاز به تنظیم API key دارید.\n'
+                      'برای اجرا محلی، برنامه را با پارامتر زیر اجرا کنید:',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    SelectableText(
+                      "flutter run --dart-define=GEMINI_API_KEY=YOUR_KEY_HERE",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontFamily: 'monospace'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.copy),
+                          label: const Text('Copy command'),
+                          onPressed: () {
+                            Clipboard.setData(const ClipboardData(text: 'flutter run --dart-define=GEMINI_API_KEY=YOUR_KEY_HERE'));
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Command copied to clipboard')));
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Open README-keys.md in app? For now show a dialog with short instructions.
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Enable Gemini API'),
+                                content: const Text('Set the GEMINI_API_KEY environment variable via --dart-define or configure it in your CI. See README-keys.md for details.'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK')),
+                                ],
+                              ),
+                            );
+                          },
+                          child: const Text('More info'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           }

@@ -77,7 +77,9 @@ flutter:
 
   # Asset declaration to include all necessary files
   assets:
-    - assets/data/
+    - assets/data/ielts_words.json
+    - assets/data/default_words.json
+    - assets/data/toefl_words.json
     - assets/icon.png
 
   # Font declaration for the local Inter font
