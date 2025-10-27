@@ -30,13 +30,15 @@ class WordDataAdapter extends TypeAdapter<WordData> {
       phrasalVerbs: (fields[10] as List?)?.cast<PhrasalVerb>(),
       wordForms: (fields[11] as List?)?.cast<WordForm>(),
       mnemonic: fields[12] as String?,
+      cefrLevel: fields[13] as String?,
+      audioUrls: (fields[14] as Map?)?.cast<String, String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, WordData obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.word)
       ..writeByte(1)
@@ -63,6 +65,10 @@ class WordDataAdapter extends TypeAdapter<WordData> {
       ..write(obj.wordForms)
       ..writeByte(12)
       ..write(obj.mnemonic);
+      ..writeByte(13)
+      ..write(obj.cefrLevel)
+      ..writeByte(14)
+      ..write(obj.audioUrls);
   }
 
   @override
@@ -105,7 +111,9 @@ WordData _$WordDataFromJson(Map<String, dynamic> json) => WordData(
       wordForms: (json['wordForms'] as List<dynamic>?)
           ?.map((e) => WordForm.fromJson(e as Map<String, dynamic>))
           .toList(),
-      mnemonic: json['mnemonic'] as String?,
+    mnemonic: json['mnemonic'] as String?,
+    cefrLevel: json['cefrLevel'] as String?,
+    audioUrls: (json['audioUrls'] as Map<String, dynamic>?)?.map((k, e) => MapEntry(k as String, e as String)),
     );
 
 Map<String, dynamic> _$WordDataToJson(WordData instance) => <String, dynamic>{
@@ -121,5 +129,7 @@ Map<String, dynamic> _$WordDataToJson(WordData instance) => <String, dynamic>{
       'persianContexts': instance.persianContexts,
       'phrasalVerbs': instance.phrasalVerbs,
       'wordForms': instance.wordForms,
-      'mnemonic': instance.mnemonic,
+  'mnemonic': instance.mnemonic,
+  'cefrLevel': instance.cefrLevel,
+  'audioUrls': instance.audioUrls,
     };
