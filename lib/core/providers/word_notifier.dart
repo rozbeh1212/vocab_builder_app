@@ -327,6 +327,15 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
     final cefrLevel = raw['cefrLevel'] as String?;
     final usageNote = raw['usageNote'] as String?;
 
+    // Convert audioMap to Map<String,String> if present
+    Map<String, String>? audioUrlsMap;
+    if (audioMap != null) {
+      audioUrlsMap = {};
+      audioMap.forEach((k, v) {
+        if (v is String) audioUrlsMap![k.toString()] = v;
+      });
+    }
+
     return WordData(
       word: raw['word'] as String? ?? '',
       meaning: raw['persianMeaning'] as String? ?? raw['meaning'] as String?,
@@ -340,9 +349,9 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
       persianContexts: persianContexts.isNotEmpty ? persianContexts : null,
       phrasalVerbs: phrasalVerbs.isNotEmpty ? phrasalVerbs : null,
       wordForms: wordForms.isNotEmpty ? wordForms : null,
-      mnemonic: cefrLevel != null
-          ? 'CEFR: $cefrLevel${usageNote != null && usageNote.isNotEmpty ? '\n$usageNote' : ''}'
-          : usageNote,
+      mnemonic: usageNote,
+      cefrLevel: cefrLevel,
+      audioUrls: audioUrlsMap,
     );
   }
 }

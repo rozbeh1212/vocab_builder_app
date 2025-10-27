@@ -38,6 +38,10 @@ class WordData extends HiveObject {
   final List<WordForm>? wordForms;
   @HiveField(12) // New field for mnemonic
   final String? mnemonic;
+  @HiveField(13)
+  final String? cefrLevel;
+  @HiveField(14)
+  final Map<String, String>? audioUrls;
 
   WordData({
     required this.word,
@@ -53,6 +57,8 @@ class WordData extends HiveObject {
     this.phrasalVerbs,
     this.wordForms,
     this.mnemonic,
+    this.cefrLevel,
+    this.audioUrls,
   });
 
   factory WordData.fromJson(Map<String, dynamic> json) => _$WordDataFromJson(json);
@@ -92,7 +98,7 @@ class WordData extends HiveObject {
 
   @override
   String toString() {
-    return 'WordData(word: $word, meaning: $meaning, example: $example, pronunciation: $pronunciation, synonyms: $synonyms, antonyms: $antonyms, imageUrl: $imageUrl, audioUrl: $audioUrl, definitions: $definitions, persianContexts: $persianContexts, phrasalVerbs: $phrasalVerbs, wordForms: $wordForms, mnemonic: $mnemonic)';
+    return 'WordData(word: $word, meaning: $meaning, example: $example, pronunciation: $pronunciation, synonyms: $synonyms, antonyms: $antonyms, imageUrl: $imageUrl, audioUrl: $audioUrl, definitions: $definitions, persianContexts: $persianContexts, phrasalVerbs: $phrasalVerbs, wordForms: $wordForms, mnemonic: $mnemonic, cefrLevel: $cefrLevel, audioUrls: $audioUrls)';
   }
 
   @override
@@ -111,8 +117,10 @@ class WordData extends HiveObject {
         listEquals(other.definitions, definitions) &&
         listEquals(other.persianContexts, persianContexts) &&
         listEquals(other.phrasalVerbs, phrasalVerbs) &&
-        listEquals(other.wordForms, wordForms) &&
-        other.mnemonic == mnemonic;
+    listEquals(other.wordForms, wordForms) &&
+    other.mnemonic == mnemonic &&
+    other.cefrLevel == cefrLevel &&
+    mapEquals(other.audioUrls, audioUrls);
   }
 
   @override
@@ -129,6 +137,8 @@ class WordData extends HiveObject {
         persianContexts.hashCode ^
         phrasalVerbs.hashCode ^
         wordForms.hashCode ^
-        mnemonic.hashCode;
+        mnemonic.hashCode ^
+        (cefrLevel?.hashCode ?? 0) ^
+        (audioUrls?.hashCode ?? 0);
   }
 }

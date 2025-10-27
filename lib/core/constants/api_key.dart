@@ -1,11 +1,8 @@
-/// NOTE: For testing only — this file temporarily contains a hardcoded
-/// Gemini API key at the user's request. Remove this value before
-/// committing to a public repository or production use.
-const String geminiApiKey = 'AIzaSyAMzLPKPFPv_xdNXpT30JZ2YuCyhEgmn9E';
+/// Gemini API key retrieval.
+///
+/// Keys must be supplied at build/runtime via a compile-time define.
+/// Example: flutter run --dart-define=GEMINI_API_KEY=your_key_here
+const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
-/// A simple check to ensure the API key is provided at runtime.
-void validateApiKey() {
-  if (geminiApiKey.isEmpty) {
-    throw Exception('Gemini API key is not provided.');
-  }
-}
+/// Returns true when a key has been supplied via --dart-define.
+bool hasGeminiApiKey() => geminiApiKey.isNotEmpty;

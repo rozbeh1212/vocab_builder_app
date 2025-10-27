@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/persian_context.dart';
 import '../../../core/models/word_data.dart';
 
@@ -147,6 +148,18 @@ class WordDetailsDisplay extends StatelessWidget {
                     style: theme.textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 6),
+                  // CEFR badge
+                  if (wordData.cefrLevel != null && wordData.cefrLevel!.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withAlpha(30),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text('CEFR: ${wordData.cefrLevel}', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     wordData.pronunciation ?? '',
@@ -156,16 +169,41 @@ class WordDetailsDisplay extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.volume_up_outlined),
-              onPressed: () {
-                // TODO: Implement Text-to-Speech functionality.
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Coming soon: Word pronunciation')),
-                );
-              },
-              tooltip: 'Listen to pronunciation',
+            Column(
+              children: [
+                // If audioUrls map exists, show separate US/UK buttons
+                if (wordData.audioUrls != null && wordData.audioUrls!.isNotEmpty) ...[
+                  if (wordData.audioUrls!.containsKey('us'))
+                    IconButton(
+                      icon: const Icon(Icons.volume_up),
+                      tooltip: 'Play US audio',
+                      onPressed: () async {
+                        final url = Uri.tryParse(wordData.audioUrls!['us']!);
+                        if (url != null) await launchUrl(url);
+                      },
+                    ),
+                  if (wordData.audioUrls!.containsKey('uk'))
+                    IconButton(
+                      icon: const Icon(Icons.headphones),
+                      tooltip: 'Play UK audio',
+                      onPressed: () async {
+                        final url = Uri.tryParse(wordData.audioUrls!['uk']!);
+                        if (url != null) await launchUrl(url);
+                      },
+                    ),
+                ] else ...[
+                  IconButton(
+                    icon: const Icon(Icons.volume_up_outlined),
+                    onPressed: () {
+                      // TODO: Implement Text-to-Speech functionality.
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Coming soon: Word pronunciation')),
+                      );
+                    },
+                    tooltip: 'Listen to pronunciation',
+                  ),
+                ]
+              ],
             ),
           ],
         ),
