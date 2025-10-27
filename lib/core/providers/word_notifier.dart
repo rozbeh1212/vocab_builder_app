@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/word_data.dart';
 import '../models/definition.dart';
 import '../models/word_srs.dart';
+import '../models/word_form.dart';
+import '../models/phrasal_verb.dart';
+import '../models/persian_context.dart';
 import '../services/cache_service.dart';
 import '../services/default_word_service.dart'; // Import DefaultWordService
-import '../services/gemini_service.dart';
+// GeminiService removed — we now read details from local JSON assets only.
 import '../services/srs_service.dart';
 
 /// Provides an asynchronous notifier for managing the list of [WordSRS] objects.
@@ -17,7 +20,6 @@ final wordNotifierProvider =
 
 class WordNotifier extends AsyncNotifier<List<WordSRS>> {
   final CacheService _cacheService = CacheService.instance;
-  final GeminiService _geminiService = GeminiService();
   final DefaultWordService _defaultWordService = DefaultWordService(); // Instantiate DefaultWordService
 
   /// The build method is called when the provider is first read.
@@ -198,10 +200,10 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
         return details;
       }
 
-      // If not in cache, fetch from the external service.
-      details = await _geminiService.getWordDetails(word);
-      if (details != null) {
-        // If fetched successfully, save to cache for next time.
+      // If not in cache, fetch from local JSON assets.
+      final Map<String, dynamic>? raw = await _defaultWordService.loadWordDetails(word);
+      if (raw != null) {
+        details = _mapToWordData(raw);
         await _cacheService.saveWordDetails(word, details);
       }
       // If still null, provide a minimal fallback WordData so UI can show something.
@@ -235,5 +237,112 @@ class WordNotifier extends AsyncNotifier<List<WordSRS>> {
       // In case of error, return null. The caller should handle this.
       return null;
     }
+  }
+
+  /// Converts a raw JSON-like map into a [WordData] instance.
+  WordData _mapToWordData(Map<String, dynamic> raw) {
+    // Pronunciation/phonetic
+    final pronunciation = raw['phonetic'] as String? ?? raw['pronunciation'] as String?;
+
+    // Definitions: list of strings -> List<Definition>
+    final defs = <Definition>[];
+    final defsFromJson = raw['definitions'] as List<dynamic>?;
+    if (defsFromJson != null) {
+      for (final d in defsFromJson) {
+        if (d is String) {
+          defs.add(Definition(partOfSpeech: '', meaning: d, example: ''));
+        } else if (d is Map<String, dynamic>) {
+          defs.add(Definition(
+            partOfSpeech: d['partOfSpeech'] as String? ?? '',
+            meaning: d['meaning'] as String? ?? '',
+            example: d['example'] as String? ?? '',
+          ));
+        }
+      }
+    }
+
+    // Synonyms/Antonyms
+    final synonyms = (raw['synonyms'] as List?)?.whereType<String>().toList();
+    final antonyms = (raw['antonyms'] as List?)?.whereType<String>().toList();
+
+    // Word family -> wordForms
+    final wordForms = <WordForm>[];
+    final wf = raw['wordFamily'] as List?;
+    if (wf != null) {
+      for (final item in wf) {
+        if (item is Map<String, dynamic>) {
+          wordForms.add(WordForm(
+            formType: item['partOfSpeech'] as String? ?? '',
+            word: item['word'] as String? ?? '',
+            meaning: null,
+            example: null,
+          ));
+        }
+      }
+    }
+
+    // Phrasal verbs
+    final phrasalVerbs = <PhrasalVerb>[];
+    final pv = raw['phrasalVerbs'] as List?;
+    if (pv != null) {
+      for (final item in pv) {
+        if (item is Map<String, dynamic>) {
+          phrasalVerbs.add(PhrasalVerb(
+            verb: item['verb'] as String? ?? '',
+            meaning: item['meaning'] as String? ?? '',
+            example: item['example'] as String? ?? '',
+          ));
+        }
+      }
+    }
+
+    // Persian contexts: use persianMeaning + usageNote + collocations
+    final persianContexts = <PersianContext>[];
+    final persianMeaning = raw['persianMeaning'] as String?;
+    if (persianMeaning != null && persianMeaning.isNotEmpty) {
+      persianContexts.add(PersianContext(
+        meaning: persianMeaning,
+        example: (raw['exampleSentences'] as List?)?.isNotEmpty == true
+            ? (raw['exampleSentences'] as List).first as String? ?? ''
+            : raw['example'] as String? ?? '',
+        usageNotes: raw['usageNote'] as String?,
+        collocations: (raw['collocations'] as List?)?.whereType<String>().toList(),
+        prepositionUsage: null,
+      ));
+    }
+
+    // Audio: prefer US then UK
+    String? audioUrl;
+    final audioMap = raw['audioUrls'] as Map?;
+    if (audioMap != null) {
+      audioUrl = (audioMap['us'] as String?) ?? (audioMap['uk'] as String?);
+    }
+
+    // Example: take the first example sentence if available
+    String? example;
+    final examples = (raw['exampleSentences'] as List?)?.whereType<String>().toList();
+    if (examples != null && examples.isNotEmpty) example = examples.first;
+    example ??= raw['example'] as String?;
+
+    final cefrLevel = raw['cefrLevel'] as String?;
+    final usageNote = raw['usageNote'] as String?;
+
+    return WordData(
+      word: raw['word'] as String? ?? '',
+      meaning: raw['persianMeaning'] as String? ?? raw['meaning'] as String?,
+      example: example,
+      pronunciation: pronunciation,
+      synonyms: synonyms,
+      antonyms: antonyms,
+      imageUrl: null,
+      audioUrl: audioUrl,
+      definitions: defs.isNotEmpty ? defs : null,
+      persianContexts: persianContexts.isNotEmpty ? persianContexts : null,
+      phrasalVerbs: phrasalVerbs.isNotEmpty ? phrasalVerbs : null,
+      wordForms: wordForms.isNotEmpty ? wordForms : null,
+      mnemonic: cefrLevel != null
+          ? 'CEFR: $cefrLevel${usageNote != null && usageNote.isNotEmpty ? '\n$usageNote' : ''}'
+          : usageNote,
+    );
   }
 }

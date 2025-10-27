@@ -122,7 +122,6 @@ class WordDetailScreen extends ConsumerWidget {
         ),
         data: (wordData) {
           if (wordData == null) {
-            // Provide a helpful message if details couldn't be fetched (e.g., missing API key)
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -132,52 +131,31 @@ class WordDetailScreen extends ConsumerWidget {
                     const Icon(Icons.info_outline, size: 56, color: Colors.orange),
                     const SizedBox(height: 12),
                     Text(
-                      'جزئیات کلمه در دسترس نیست.',
+                      'جزئیات کلمه بصورت محلی موجود نیست.',
                       style: Theme.of(context).textTheme.titleLarge,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'برای نمایش معنی و مثال‌ها از سرویس هوش مصنوعی (Gemini) نیاز به تنظیم API key دارید.\n'
-                      'برای اجرا محلی، برنامه را با پارامتر زیر اجرا کنید:',
+                      'این برنامه اکنون تنها از داده‌های محلی در `assets/data/*.json` استفاده می‌کند.\n'
+                      'برای افزودن جزئیات، فایل JSON مربوطه را با ساختار موردنظر (مثال در README-keys.md) در `assets/data/` قرار دهید.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    SelectableText(
-                      "flutter run --dart-define=GEMINI_API_KEY=YOUR_KEY_HERE",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontFamily: 'monospace'),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.copy),
-                          label: const Text('Copy command'),
-                          onPressed: () {
-                            Clipboard.setData(const ClipboardData(text: 'flutter run --dart-define=GEMINI_API_KEY=YOUR_KEY_HERE'));
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Command copied to clipboard')));
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            // Open README-keys.md in app? For now show a dialog with short instructions.
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Enable Gemini API'),
-                                content: const Text('Set the GEMINI_API_KEY environment variable via --dart-define or configure it in your CI. See README-keys.md for details.'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK')),
-                                ],
-                              ),
-                            );
-                          },
-                          child: const Text('More info'),
-                        ),
-                      ],
+                    ElevatedButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Local word details'),
+                            content: const Text('Place detailed word JSON objects in assets/data/default_words.json or the category files. Each object must include a "word" key.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK')),
+                            ],
+                          ),
+                        );
+                      },
+                      child: const Text('How to add details'),
                     ),
                   ],
                 ),

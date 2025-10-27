@@ -22,8 +22,19 @@ class DefaultWordService {
       // Decode the JSON string into a list of dynamic objects.
       final List<dynamic> jsonList = jsonDecode(jsonString);
 
-      // Cast the dynamic list to a list of strings and return it.
-      return jsonList.cast<String>();
+      // The asset may contain either a list of plain words (strings)
+      // or a list of detailed word objects. Normalize both formats
+      // into a simple List<String> of the word keys.
+      final List<String> words = [];
+      for (final item in jsonList) {
+        if (item is String) {
+          words.add(item);
+        } else if (item is Map<String, dynamic> && item.containsKey('word')) {
+          final w = item['word'];
+          if (w is String) words.add(w);
+        }
+      }
+      return words;
     } catch (e, st) {
       // Log any errors that occur during the file loading or parsing process.
       developer.log(
@@ -34,5 +45,33 @@ class DefaultWordService {
       // Return an empty list to ensure the application remains stable.
       return [];
     }
+  }
+
+  /// Loads a detailed word object (map) for a given [word] from known asset files.
+  ///
+  /// Returns the decoded Map<String, dynamic> if found, otherwise null.
+  Future<Map<String, dynamic>?> loadWordDetails(String word) async {
+    final normalized = word.trim().toLowerCase();
+    final List<String> assetPaths = [
+      'assets/data/default_words.json',
+      'assets/data/ielts_words.json',
+      'assets/data/toefl_words.json',
+    ];
+
+    for (final path in assetPaths) {
+      try {
+        final String jsonString = await rootBundle.loadString(path);
+        final List<dynamic> data = jsonDecode(jsonString);
+        for (final item in data) {
+          if (item is Map<String, dynamic>) {
+            final w = (item['word'] ?? '').toString().toLowerCase();
+            if (w == normalized) return item;
+          }
+        }
+      } catch (e, st) {
+        developer.log('Failed to read $path while searching for details for $word', error: e, stackTrace: st);
+      }
+    }
+    return null;
   }
 }
