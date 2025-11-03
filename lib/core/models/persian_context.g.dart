@@ -8,7 +8,7 @@ part of 'persian_context.dart';
 
 class PersianContextAdapter extends TypeAdapter<PersianContext> {
   @override
-  final int typeId = 2;
+  final int typeId = 8;
 
   @override
   PersianContext read(BinaryReader reader) {

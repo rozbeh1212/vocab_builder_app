@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 
 part 'word_form.g.dart';
 
-@HiveType(typeId: 3) // Using a new, unused typeId
+@HiveType(typeId: 11) // Using a new, unused typeId
 @JsonSerializable()
 class WordForm with EquatableMixin {
   @HiveField(0)

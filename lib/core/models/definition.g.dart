@@ -8,7 +8,7 @@ part of 'definition.dart';
 
 class DefinitionAdapter extends TypeAdapter<Definition> {
   @override
-  final int typeId = 2;
+  final int typeId = 6;
 
   @override
   Definition read(BinaryReader reader) {

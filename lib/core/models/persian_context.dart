@@ -11,7 +11,7 @@ part 'persian_context.g.dart';
 /// understand word usage in a Persian cultural and linguistic context.
 @JsonSerializable()
 @immutable
-@HiveType(typeId: 2)
+@HiveType(typeId: 8)
 class PersianContext {
   @HiveField(0)
   final String? meaning;

@@ -8,7 +8,7 @@ part 'achievement.g.dart';
 /// This class is designed for persistence with Hive and includes details
 /// such as the achievement's title, description, and the date it was earned.
 @immutable
-@HiveType(typeId: 3)
+@HiveType(typeId: 7)
 class Achievement {
   @HiveField(0)
   final String id;

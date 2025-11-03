@@ -8,7 +8,7 @@ part 'user_profile.g.dart';
 /// This class is designed for persistence with Hive and stores progress metrics
 /// like experience points, level, and daily streaks.
 @immutable
-@HiveType(typeId: 2)
+@HiveType(typeId: 9)
 class UserProfile {
   @HiveField(0)
   final String id;
