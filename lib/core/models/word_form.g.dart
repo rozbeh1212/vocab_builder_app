@@ -8,7 +8,7 @@ part of 'word_form.dart';
 
 class WordFormAdapter extends TypeAdapter<WordForm> {
   @override
-  final int typeId = 3;
+  final int typeId = 11;
 
   @override
   WordForm read(BinaryReader reader) {

@@ -8,7 +8,7 @@ part of 'preposition_usage.dart';
 
 class PrepositionUsageAdapter extends TypeAdapter<PrepositionUsage> {
   @override
-  final int typeId = 3;
+  final int typeId = 10;
 
   @override
   PrepositionUsage read(BinaryReader reader) {

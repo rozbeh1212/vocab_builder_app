@@ -3,7 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'definition.g.dart';
 
-@HiveType(typeId: 2) // Unique typeId for Definition
+@HiveType(typeId: 6) // Unique typeId for Definition
 @JsonSerializable()
 class Definition extends HiveObject {
   @HiveField(0)

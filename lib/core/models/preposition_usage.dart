@@ -3,7 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'preposition_usage.g.dart';
 
-@HiveType(typeId: 3) // Unique typeId for PrepositionUsage
+@HiveType(typeId: 10) // Unique typeId for PrepositionUsage
 @JsonSerializable()
 class PrepositionUsage extends HiveObject {
   @HiveField(0)
