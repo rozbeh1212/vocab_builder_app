@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/models/word.dart';
+import '../../core/services/word_service.dart';
+import '../providers/word_provider.dart';
+import 'word_detail_screen.dart';
+import '../widgets/common/app_loader.dart';
+
+class WordListScreen extends StatefulWidget {
+  final String category;
+  const WordListScreen({super.key, required this.category});
+
+  @override
+  State<WordListScreen> createState() => _WordListScreenState();
+}
+
+class _WordListScreenState extends State<WordListScreen> {
+  late Future<List<Word>> _wordsFuture;
+  final WordService _wordService = WordService();
+
+  @override
+  void initState() {
+    super.initState();
+    _wordsFuture = _wordService.loadWords(widget.category);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WordProvider>().loadWords();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${widget.category} Words'),
+      ),
+      body: Consumer<WordProvider>(
+        builder: (context, provider, _) {
+          return FutureBuilder<List<Word>>(
+            future: _wordsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting || 
+                  provider.isLoading) {
+                return const Center(child: AppLoader());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              final words = snapshot.data ?? [];
+              if (words.isEmpty) {
+                return const Center(child: Text('No words found'));
+              }
+
+              return ListView.builder(
+                itemCount: words.length,
+                itemBuilder: (context, index) {
+                  final word = words[index];
+                  return ListTile(
+                    title: Text(word.word),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WordDetailScreen(word: word.word),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}

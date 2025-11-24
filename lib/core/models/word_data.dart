@@ -1,0 +1,144 @@
+import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+import 'package:vocab_builder_app/core/models/definition.dart';
+import 'package:vocab_builder_app/core/models/persian_context.dart'; // Import PersianContext
+import 'package:vocab_builder_app/core/models/word_form.dart'; // Import WordForm
+import 'package:vocab_builder_app/core/models/phrasal_verb.dart'; // Import PhrasalVerb
+
+part 'word_data.g.dart';
+
+@HiveType(typeId: 1) // Unique typeId for WordData
+@JsonSerializable()
+class WordData extends HiveObject {
+  @HiveField(0)
+  final String word;
+  @HiveField(1)
+  final String? meaning;
+  @HiveField(2)
+  final String? example;
+  @HiveField(3)
+  final String? pronunciation;
+  @HiveField(4)
+  final List<String>? synonyms;
+  @HiveField(5)
+  final List<String>? antonyms;
+  @HiveField(6)
+  final String? imageUrl;
+  @HiveField(7)
+  final String? audioUrl;
+  @HiveField(8) // New field
+  final List<Definition>? definitions;
+  @HiveField(9) // New field
+  final List<PersianContext>? persianContexts;
+  @HiveField(10) // Updated field for phrasal verbs
+  final List<PhrasalVerb>? phrasalVerbs;
+  @HiveField(11) // New field for word forms
+  final List<WordForm>? wordForms;
+  @HiveField(12) // New field for mnemonic
+  final String? mnemonic;
+  @HiveField(13)
+  final String? cefrLevel;
+  @HiveField(14)
+  final Map<String, String>? audioUrls;
+
+  WordData({
+    required this.word,
+    this.meaning,
+    this.example,
+    this.pronunciation,
+    this.synonyms,
+    this.antonyms,
+    this.imageUrl,
+    this.audioUrl,
+    this.definitions, // New field
+    this.persianContexts, // New field
+    this.phrasalVerbs,
+    this.wordForms,
+    this.mnemonic,
+    this.cefrLevel,
+    this.audioUrls,
+  });
+
+  factory WordData.fromJson(Map<String, dynamic> json) => _$WordDataFromJson(json);
+  Map<String, dynamic> toJson() => _$WordDataToJson(this);
+
+  WordData copyWith({
+    String? word,
+    String? meaning,
+    String? example,
+    String? pronunciation,
+    List<String>? synonyms,
+    List<String>? antonyms,
+    String? imageUrl,
+    String? audioUrl,
+    List<Definition>? definitions, // New field
+    List<PersianContext>? persianContexts, // New field
+    List<PhrasalVerb>? phrasalVerbs,
+    List<WordForm>? wordForms,
+    String? mnemonic,
+  }) {
+    return WordData(
+      word: word ?? this.word,
+      meaning: meaning ?? this.meaning,
+      example: example ?? this.example,
+      pronunciation: pronunciation ?? this.pronunciation,
+      synonyms: synonyms ?? this.synonyms,
+      antonyms: antonyms ?? this.antonyms,
+      imageUrl: imageUrl ?? this.imageUrl,
+      audioUrl: audioUrl ?? this.audioUrl,
+      definitions: definitions ?? this.definitions, // New field
+      persianContexts: persianContexts ?? this.persianContexts, // New field
+      phrasalVerbs: phrasalVerbs ?? this.phrasalVerbs,
+      wordForms: wordForms ?? this.wordForms,
+      mnemonic: mnemonic ?? this.mnemonic,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'WordData(word: $word, meaning: $meaning, example: $example, pronunciation: $pronunciation, synonyms: $synonyms, antonyms: $antonyms, imageUrl: $imageUrl, audioUrl: $audioUrl, definitions: $definitions, persianContexts: $persianContexts, phrasalVerbs: $phrasalVerbs, wordForms: $wordForms, mnemonic: $mnemonic, cefrLevel: $cefrLevel, audioUrls: $audioUrls)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is WordData &&
+        other.word == word &&
+        other.meaning == meaning &&
+        other.example == example &&
+        other.pronunciation == pronunciation &&
+        listEquals(other.synonyms, synonyms) &&
+        listEquals(other.antonyms, antonyms) &&
+        other.imageUrl == imageUrl &&
+        other.audioUrl == audioUrl &&
+        listEquals(other.definitions, definitions) &&
+        listEquals(other.persianContexts, persianContexts) &&
+        listEquals(other.phrasalVerbs, phrasalVerbs) &&
+    listEquals(other.wordForms, wordForms) &&
+    other.mnemonic == mnemonic &&
+    other.cefrLevel == cefrLevel &&
+    mapEquals(other.audioUrls, audioUrls);
+  }
+
+  @override
+  int get hashCode {
+    return word.hashCode ^
+        meaning.hashCode ^
+        example.hashCode ^
+        pronunciation.hashCode ^
+        synonyms.hashCode ^
+        antonyms.hashCode ^
+        imageUrl.hashCode ^
+        audioUrl.hashCode ^
+        definitions.hashCode ^
+        persianContexts.hashCode ^
+        phrasalVerbs.hashCode ^
+        wordForms.hashCode ^
+        mnemonic.hashCode ^
+        (cefrLevel?.hashCode ?? 0) ^
+        (audioUrls?.hashCode ?? 0);
+  }
+}
